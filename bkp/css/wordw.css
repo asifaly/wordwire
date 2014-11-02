@@ -1,0 +1,16 @@
+body{
+	background: #ddd;
+}
+
+.wordw {
+width: 250px; 
+height:200px; 
+float:left; 
+background:#fff; 
+margin:5px; 
+padding-top:10px;
+padding-right: 10px;
+padding-left: 10px;
+padding-bottom: 10px;
+text-align: center;
+}

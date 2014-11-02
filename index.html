@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Word Wire</title>
+	<link href="css/wordw.css" rel="stylesheet">
+</head>
+<body ng-app="wordWire">
+	<h1>Word Wire</h1>
+	<div ng-controller="WordCtrl">
+		<div>
+		<div class = "wordw">
+			<h2>Play</h2>
+		<form name="myForm">
+		<input type="text" name="word" ng-model="newword.name" placeholder="Enter an English Word" ng-pattern="/^[a-zA-Z_\-]+$/" ng-minlength="2" required /><br />
+		<alert ng-show="myForm.word.$error.pattern" ng-bind="errmsg">
+      	</alert>
+      	<br />
+      	<button ng-click="addWord()" ng-disabled="myForm.word.$error.minlength || myForm.word.$error.pattern || myForm.$pristine || myForm.word.$error.required">Submit</button></form>
+      	</div>
+      	<div class="wordw"><h3>Last word : <span ng-repeat="(id, lref) in lrefs">{{lref.name}}</span></h3>
+      	<h3>Begin with Letter : <span ng-bind="firstletter | uppercase"></span></h3>
+		<h3>Current Word Score : <span ng-bind="newword.score"></span><h3></h3>
+		</div>
+      	</div>
+		<div class="wordw">
+		<h2>Recently Added</h2>
+		<span ng-repeat="(id,word) in words | orderBy : id : 'reverse'">{{word.name}}({{word.score}}), <span>
+	</div>
+	<!--Angular-->
+	<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
+	<!-- Firebase -->
+    <script src="https://cdn.firebase.com/js/client/1.0.21/firebase.js"></script>
+    <!-- AngularFire -->
+    <script src="https://cdn.firebase.com/libs/angularfire/0.8.2/angularfire.min.js"></script>
+	<!--Wordwire-->
+	<script src="js/app_bkp2.js"></script>
+	</body>
+	</html>
+	
