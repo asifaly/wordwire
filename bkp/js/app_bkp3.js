@@ -36,8 +36,6 @@ var wordWire = angular.module('wordWire',['firebase']);
 				sum += scores[wordy.charAt(i)] || 0;
 					}
 				$scope.newword.score = sum;
-                $scope.wordpattern=$scope.firstletter;
-                console.log($scope.wordpattern);
 			}
 			else {
 				//if value is undefined then it will set the score to zero
