@@ -3,29 +3,50 @@
 }
 
 .wordw {
-width: 250px; 
-height:200px; 
-float:left; 
-background:#fff; 
-margin:5px; 
+width: 250px;
+height:200px;
+float:left;
+background:#fff;
+margin:5px;
 padding-top:10px;
 padding-right: 10px;
 padding-left: 10px;
 padding-bottom: 10px;
 text-align: center;
-} */
-#mini {
-	/* min-height: 180px; */
-}
+} *//*
 
-#wordwrap { 
-   white-space: pre-wrap;      /* CSS3 */   
-   white-space: -moz-pre-wrap; /* Firefox */    
-   white-space: -pre-wrap;     /* Opera <7 */   
-   white-space: -o-pre-wrap;   /* Opera 7 */    
-   word-wrap: break-word;      /* IE */
-   padding-top: 0;
+*/
+/* #mini {
+	*/
+/* min-height: 180px; *//*
+
+}
+*/
+/*
+#wordwrap {
+   white-space: pre-wrap;      */
+/* CSS3 *//*
+
+  */
+/* white-space: -moz-pre-wrap; */
+/* Firefox *//*
+
+  */
+/* white-space: -pre-wrap;     */
+/* Opera <7 *//*
+
+  */
+/* white-space: -o-pre-wrap;   */
+/* Opera 7 *//*
+
+  */
+/* word-wrap: break-word;      */
+/* IE *//*
+
+  */
+/* padding-top: 0;
    padding-left: 10px;
    padding-right: 10px;
-   margin-top: 0px;
-}
+   margin-top: 0px;*//*
+
+}*/

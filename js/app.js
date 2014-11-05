@@ -2,24 +2,27 @@ var wordWire = angular.module('wordWire', ['firebase']);
 wordWire.constant('FIREBASE_URI', 'https://wordwire.firebaseio.com/');
 wordWire.controller('WordCtrl', ['$scope', 'WordsService', function ($scope, WordsService) {
     //get last 10 words from firebase
-    $scope.words = WordsService.getWords();
-    //initialize values
-    $scope.newword = {name: '', score: ''};
-
-    //add newword to firebase
-    $scope.addWord = function () {
-        WordsService.addWord(angular.copy($scope.newword));
-
-        //clear the newword ng-model
-        $scope.newword = {name: '', score: ''};
-    };
-
+    WordsService.getWords().then(function (data) {
+        //load data to words on promise
+        $scope.words = data;
+        //initialize values
+        $scope.words.newword = {name: '', score: ''};
+        //add newword to firebase
+        $scope.words.addWord = function () {
+            WordsService.addWord(angular.copy($scope.words.newword)).then(function (nref) {
+                var id = nref.name();
+                console.log("newword added successfully" + id);
+            });
+            //clear the newword ng-model
+            $scope.words.newword = {name: '', score: ''};
+        };
+    });
     //watch for changes to input field ng-model=newword.name and compute newword.score
-    $scope.$watch("newword.name", function (newValue, oldValue) {
-        if ($scope.newword.name !== undefined) {
-            var wordy = $scope.newword.name;
+    $scope.$watch("words.newword.name", function (newValue) {
+        if (newValue !== undefined) {
+            var wordy = newValue;
             wordy = wordy.toUpperCase();
-            scores = {
+            var scores = {
                 'A': 1,
                 'B': 3,
                 'C': 3,
@@ -52,39 +55,43 @@ wordWire.controller('WordCtrl', ['$scope', 'WordsService', function ($scope, Wor
             for (var i = 0; i < wordy.length; ++i) {
                 sum += scores[wordy.charAt(i)] || 0;
             }
-            $scope.newword.score = sum;
+            $scope.words.newword.score = sum;
         }
         else {
             //if value is undefined then it will set the score to zero
-            $scope.newword.score = 0;
+            //$scope.words.newword.score = 0;
         }
     });
 }]);
 
 wordWire.factory('WordsService', ['$firebase', 'FIREBASE_URI', function ($firebase, FIREBASE_URI) {
     var ref = new Firebase(FIREBASE_URI + "/words");
-    var words = $firebase(ref.limit(5)).$asArray();
+    var wref = $firebase(ref.limit(5)).$asArray();
 
     var getWords = function () {
-        return words;
+        return wref.$loaded().then(function (data) {
+            return data;
+        });
     };
-
     var addWord = function (word) {
-        words.$add(word);
+        return wref.$add(word).then(function (nref) {
+            return nref;
+        });
     };
 
     return {
         getWords: getWords,
         addWord: addWord
     };
-}]);
+}
+]);
 
 //filter for score, it works but not sure how to use it in the model to upload to firebase
 wordWire.filter('score', function () {
     return function (text) {
         if (text !== undefined) {
             text = text.toUpperCase();
-            scores = {
+            var scores = {
                 'A': 1,
                 'B': 3,
                 'C': 3,
