@@ -25,7 +25,7 @@
 									<div class="form-group">
 										<input type="text" name="word" id="input" class="form-control"
 											   ng-model="words.newword.name" placeholder="Enter an English Word"
-											   ng-pattern="/^([S])([A-Z])*$/i" ng-minlength="2" required>
+											   ng-pattern="newwordpattern" ng-minlength="2" required>
 										<button type="button" class="btn btn-primary" ng-click="words.addWord()"
 												ng-disabled="myForm.word.$error.minlength || myForm.word.$error.pattern || myForm.$pristine || myForm.word.$error.required">
 											Submit
@@ -44,8 +44,7 @@
 											<tbody>
 												<tr>
 													<td><strong>Current Word Score : </strong></td>
-													<td ng-hide="myForm.word.$error.pattern"
-														ng-bind="words.newword.score"></td>
+													<td ng-bind="words.newword.score"></td>
 												</tr>
 												<tr>
 													<td><strong>Last Word : </strong></td>
@@ -74,7 +73,7 @@
 										</tr>
 									</thead>
 									<tbody>
-									<tr ng-repeat="(id,word) in words track by $index | orderBy: '-$id'">
+									<tr ng-repeat="(id,word) in words | orderBy: '$id'">
 										<td ng-bind="words[id].name">{{word.name}}</td>
 											<td>{{word.score}}</td>
 										</tr>

@@ -1,17 +1,28 @@
 var wordWire = angular.module('wordWire', ['firebase']);
 wordWire.constant('FIREBASE_URI', 'https://wordwire.firebaseio.com/');
 wordWire.controller('WordCtrl', ['$scope', 'WordsService', function ($scope, WordsService) {
+    //initialize a dummy pattern for newword
+    $scope.newwordpattern = /([A-Z])\w+/i;
+    console.log("first " + $scope.newwordpattern);
     //get last 10 words from firebase
     WordsService.getWords().then(function (data) {
         //load data to words on promise
         $scope.words = data;
+        //update the initialized pattern based on last of 5 words from firebase
+        var textl = $scope.words[4].name;
+        $scope.newwordpattern = new RegExp("^([" + textl.charAt(textl.length - 1) + "])([A-Z])*$", "i");
+        console.log("second " + $scope.newwordpattern);
         //initialize values
         $scope.words.newword = {name: '', score: ''};
         //add newword to firebase
         $scope.words.addWord = function () {
+            var textlw = $scope.words.newword.name;
             WordsService.addWord(angular.copy($scope.words.newword)).then(function (nref) {
-                var id = nref.name();
-                console.log("newword added successfully" + id);
+                var wid = nref.name();
+                console.log("newword added successfully" + wid);
+                //update the pattern based on newword loaded
+                $scope.newwordpattern = new RegExp("^([" + textlw.charAt(textlw.length - 1) + "])([A-Z])*$", "i");
+                console.log("3rd pattern is" + $scope.newwordpattern);
             });
             //clear the newword ng-model
             $scope.words.newword = {name: '', score: ''};
@@ -76,6 +87,7 @@ wordWire.factory('WordsService', ['$firebase', 'FIREBASE_URI', function ($fireba
     var addWord = function (word) {
         return wref.$add(word).then(function (nref) {
             return nref;
+            return
         });
     };
 
