@@ -73,8 +73,8 @@
 										</tr>
 									</thead>
 									<tbody>
-									<tr ng-repeat="(id,word) in words track by $index | orderBy: '-$index'">
-										<td ng-model="words[$index]">{{word.name}}</td>
+									<tr ng-repeat="(id,word) in words">
+										<td ng-bind="words[id].name">{{word.name}}</td>
 											<td>{{word.score}}</td>
 										</tr>
 									</tbody>

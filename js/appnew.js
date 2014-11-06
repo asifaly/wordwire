@@ -3,71 +3,60 @@
  */
 var wordWire = angular.module('wordWire', ['firebase']);
 wordWire.constant('FIREBASE_URI', 'https://wordwire.firebaseio.com/');
-wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeout', function ($scope, $firebase, FIREBASE_URI, $timeout) {
+wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeout', '$window', '$filter', function ($scope, $firebase, FIREBASE_URI, $timeout, $window, $filter) {
+    //initialize pattern if it is not done, when app initializes, there is an error for invalid pattern
     $scope.stats = {};
     $scope.stats.pattern = new RegExp();
+
+    //defining firebase instances
     var wref = new Firebase(FIREBASE_URI + "/words");
     var wordref = $firebase(wref.limit(5)).$asArray();
     var sref = new Firebase(FIREBASE_URI + "/stats");
-    var statref = $firebase(sref);
-    var newref = new Firebase(FIREBASE_URI + "/stats"); // assume value here is {foo: "bar"}
-    var newobj = $firebase(newref).$asObject();
+    var statref = $firebase(sref);//can define $set only if it is not defined as Object or Array
+    var newref = new $window.Firebase(FIREBASE_URI + "/stats");// calling the Firebase Javascript SDK
 
-    $timeout(function () {
-        newobj.$loaded().then(function (stats) {
-            $scope.stats = stats;
-            console.log($scope.stats); // {foo: "bar"}
-            console.log($scope.stats.lastword);
-            console.log($scope.stats.firstletter);
-            console.log($scope.stats.pattern);
-            var patsplit = $scope.stats.pattern.split("/");
-            console.log("pattern split" + patsplit);
-            var regexp1 = new RegExp(patsplit[1], patsplit[2]);
-            console.log("regexp" + regexp1);
-            $scope.stats.pattern = regexp1;
-            console.log($scope.stats.pattern);
+    //watch for change in value of lastword, firstletter and pattern and update the scope
+    newref.on("value", function (snap) {
+        $timeout(function () {
+            $scope.stats = snap.val();//get value of firebase/stats
+            $scope.stats.pattern = $filter('pattern')(snap.val().pattern);//using filter to convert string to regex
         });
     });
 
+    //load last 5 values of words and scores from firebase
     wordref.$loaded().then(function (data) {
         //load data to words on promise
         $scope.words = data;
-        //$scope.patternname = new RegExp("^([" + data[4].name.charAt(data[4].name.length - 1) + "])([A-Z])*$", "i");
-        //console.log("pattern is" + $scope.patternname);
         //initialize values
         $scope.words.newword = {name: '', score: ''};
 
+        //this function is called on clicking the submit button
         $scope.words.addWord = function () {
+            //create variables to update stats
             var lastword = $scope.words.newword.name;
             var firstletter = lastword.substr(lastword.length - 1, 1);
             var pattern = "/^([" + firstletter + "])([A-Z])*$/i";
+            //update new word
             wordref.$add(angular.copy($scope.words.newword)).then(function (nref) {
                 var wid = nref.name();
                 console.log("newword added successfully" + wid);
-                var rec = wordref.$getRecord(wid);
+                var rec = wordref.$getRecord(wid);//record key of the new word
                 console.log(rec.name);
-                //$scope.patternname = new RegExp("^([" + data[4].name.charAt(data[4].name.length - 1) + "])([A-Z])*$", "i");
-                //update the pattern based on newword loaded
             });
-            statref.$set({
-                    lastword: lastword,
-                    firstletter: firstletter,
-                    pattern: pattern
-                }
-            ).then(function (nref) {
-                    var patsplit1 = pattern.split("/");
-                    console.log("pattern split" + patsplit1);
-                    var regexp2 = new RegExp(patsplit1[1], patsplit1[2]);
-                    console.log("regexp" + regexp2);
-                    $scope.stats.pattern = regexp2;
-                    console.log($scope.stats.pattern);
-                    //clear the newword ng-model
-                    $scope.words.newword = {name: '', score: ''};
-                });
+            $timeout(function () { //update lastword, firstletter and patten based on newword
+                statref.$set({
+                        firstletter: firstletter,
+                        lastword: lastword,
+                        pattern: pattern
+                    }
+                ).then(function (nref) {
+                        $scope.stats.pattern = $filter('pattern')(pattern);
+                        console.log($scope.stats.pattern);
+                        //clear the newword ng-model
+                        $scope.words.newword = {name: '', score: ''};
+                    });
+            });
         };
-        wordref.$watch(function (child_added) {
-            console.log(child_added);
-        });
     });
 
     //watch for changes to input field ng-model=newword.name and compute newword.score
@@ -117,7 +106,7 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
     });
 }]);
 
-//filter to catch the first letter of last word
+//filter to catch the first letter of last word - not used, just for sake of learning
 wordWire.filter('firstlet', function () {
     return function (text) {
         if (text !== undefined) {
@@ -125,13 +114,21 @@ wordWire.filter('firstlet', function () {
             return text;
         }
         else {
+            return text;
         }
     };
 });
 
-wordWire.filter('reverse', function () {
-    return function (items) {
-        if (!angular.isArray(items)) return items;
-        return items.slice().reverse();
+//filter to convert the string pattern to regex
+wordWire.filter('pattern', function () {
+    return function (text) {
+        if (text !== undefined) {
+            text = text.split("/");
+            text = new RegExp(text[1], text[2]);
+            return text;
+        }
+        else {
+            return text;
+        }
     };
 });
