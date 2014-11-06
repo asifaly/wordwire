@@ -25,7 +25,7 @@
 									<div class="form-group">
 										<input type="text" name="word" id="input" class="form-control"
 											   ng-model="words.newword.name" placeholder="Enter an English Word"
-											   ng-pattern="newwordpattern" ng-minlength="2" required>
+											   ng-pattern="stats.pattern" ng-minlength="2" required>
 										<button type="button" class="btn btn-primary" ng-click="words.addWord()"
 												ng-disabled="myForm.word.$error.minlength || myForm.word.$error.pattern || myForm.$pristine || myForm.word.$error.required">
 											Submit
@@ -48,11 +48,11 @@
 												</tr>
 												<tr>
 													<td><strong>Last Word : </strong></td>
-													<td ng-bind="words[4].name"></td>
+													<td ng-bind="stats.lastword"></td>
 												</tr>
 												<tr>
 													<td><strong>Starting Letter : </strong></td>
-													<td ng-bind="words[4].name | firstlet"></td>
+													<td ng-bind="stats.firstletter"></td>
 												</tr>
 											</tbody>
 										</table>
@@ -73,8 +73,8 @@
 										</tr>
 									</thead>
 									<tbody>
-									<tr ng-repeat="(id,word) in words | orderBy: '$id'">
-										<td ng-bind="words[id].name">{{word.name}}</td>
+									<tr ng-repeat="(id,word) in words track by $index | orderBy: '-$index'">
+										<td ng-model="words[$index]">{{word.name}}</td>
 											<td>{{word.score}}</td>
 										</tr>
 									</tbody>
@@ -96,6 +96,6 @@
 		<!-- AngularFire -->
 		<script src="https://cdn.firebase.com/libs/angularfire/0.8.2/angularfire.min.js"></script>
 		<!--Wordwire-->
-		<script src="js/app.js"></script>
+		<script src="js/appnew.js"></script>
 	</body>
 </html>
