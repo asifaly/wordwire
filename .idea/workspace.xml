@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="7d898396-ec63-42eb-8eb9-b13e55b9b3de" name="Default" comment="Again reverted back to storing the data on FB and still problem with propagting to all sessions...will try out $window in the next iteration">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/appnew.js" afterPath="$PROJECT_DIR$/js/appnew.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/index.html" afterPath="$PROJECT_DIR$/index.html" />
+    <list default="true" id="7d898396-ec63-42eb-8eb9-b13e55b9b3de" name="Default" comment="1. Pattern is updated Real Time now from firebase using FIREBASE JS SDK instead of Angularfie&#10;2. Filter created for converting string in Firebase to Regex for pattern">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="wordwire.iws" />
@@ -31,8 +29,8 @@
       <file leaf-file-name="appnew.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/js/appnew.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.5945485" vertical-offset="1674" max-vertical-offset="2346">
-              <caret line="121" column="47" selection-start-line="121" selection-start-column="47" selection-end-line="121" selection-end-column="47" />
+            <state vertical-scroll-proportion="0.6672355" vertical-offset="0" max-vertical-offset="2346">
+              <caret line="25" column="27" selection-start-line="25" selection-start-column="27" selection-end-line="25" selection-end-column="27" />
               <folding>
                 <element signature="e#0#41#0" expanded="false" />
               </folding>
@@ -225,6 +223,7 @@
     <property name="options.splitter.main.proportions" value="0.3" />
     <property name="options.splitter.details.proportions" value="0.2" />
     <property name="FullScreen" value="false" />
+    <property name="ChangesBrowser.SHOW_FLATTEN" value="false" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
@@ -312,7 +311,13 @@
       <option name="project" value="LOCAL" />
       <updated>1415305440235</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="1. Pattern is updated Real Time now from firebase using FIREBASE JS SDK instead of Angularfie&#10;2. Filter created for converting string in Firebase to Regex for pattern">
+      <created>1415311611077</created>
+      <option name="number" value="00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1415311611077</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TodoView" selected-index="4">
@@ -339,6 +344,7 @@
     <frame x="1" y="1" width="1278" height="758" extended-state="0" />
     <editor active="true" />
     <layout>
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32868218" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.51007754" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32817337" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -354,7 +360,6 @@
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32868218" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4883721" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
@@ -402,7 +407,8 @@
     <MESSAGE value="Ngpattern is dynamically updated now, still a lot of refining needs to be done and pattern has to be probably stored on firebase to be propogated to all users in realtime. Currently its fixed to per session only. And the code is probably dirty as well" />
     <MESSAGE value="Pattern is updated to firebase and retrieved from firebase, but changes are not propagated across browser sessions." />
     <MESSAGE value="Again reverted back to storing the data on FB and still problem with propagting to all sessions...will try out $window in the next iteration" />
-    <option name="LAST_COMMIT_MESSAGE" value="Again reverted back to storing the data on FB and still problem with propagting to all sessions...will try out $window in the next iteration" />
+    <MESSAGE value="1. Pattern is updated Real Time now from firebase using FIREBASE JS SDK instead of Angularfie&#10;2. Filter created for converting string in Firebase to Regex for pattern" />
+    <option name="LAST_COMMIT_MESSAGE" value="1. Pattern is updated Real Time now from firebase using FIREBASE JS SDK instead of Angularfie&#10;2. Filter created for converting string in Firebase to Regex for pattern" />
     <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="REARRANGE_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
@@ -483,8 +489,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/js/appnew.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.5945485" vertical-offset="1674" max-vertical-offset="2346">
-          <caret line="121" column="47" selection-start-line="121" selection-start-column="47" selection-end-line="121" selection-end-column="47" />
+        <state vertical-scroll-proportion="0.6672355" vertical-offset="0" max-vertical-offset="2346">
+          <caret line="25" column="27" selection-start-line="25" selection-start-column="27" selection-end-line="25" selection-end-column="27" />
           <folding>
             <element signature="e#0#41#0" expanded="false" />
           </folding>
