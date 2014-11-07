@@ -25,7 +25,8 @@
 									<div class="form-group">
 										<input type="text" name="word" id="input" class="form-control"
 											   ng-model="words.newword.name" placeholder="Enter an English Word"
-											   ng-pattern="stats.pattern" ng-minlength="2" required>
+											   ng-pattern="stats.pattern" ng-minlength="2" ww-enter="words.addWord()"
+											   required>
 										<button type="button" class="btn btn-primary" ng-click="words.addWord()"
 												ng-disabled="myForm.word.$error.minlength || myForm.word.$error.pattern || myForm.$pristine || myForm.word.$error.required">
 											Submit

@@ -34,7 +34,7 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         $scope.words.addWord = function () {
             //create variables to update stats
             var lastword = $scope.words.newword.name;
-            var firstletter = lastword.substr(lastword.length - 1, 1);
+            var firstletter = $filter('firstlet')(lastword);
             var pattern = "/^([" + firstletter + "])([A-Z])*$/i";
             //update new word
             wordref.$add(angular.copy($scope.words.newword)).then(function (nref) {
@@ -62,9 +62,44 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
     //watch for changes to input field ng-model=newword.name and compute newword.score
     $scope.$watch("words.newword.name", function (newValue) {
         if (newValue !== undefined) {
-            var wordy = newValue;
-            wordy = wordy.toUpperCase();
-            var scores = {
+            $scope.words.newword.score = $filter('score')(newValue);
+        }
+    });
+}]);
+
+//filter to catch the first letter of last word
+wordWire.filter('firstlet', function () {
+    return function (text) {
+        if (text !== undefined) {
+            text = text.charAt(text.length - 1);
+            return text;
+        }
+        else {
+            return text;
+        }
+    };
+});
+
+//filter to convert the string pattern to regex
+wordWire.filter('pattern', function () {
+    return function (text) {
+        if (text !== undefined) {
+            text = text.split("/");
+            text = new RegExp(text[1], text[2]);
+            return text;
+        }
+        else {
+            return text;
+        }
+    };
+});
+
+//filter to compute the wordscore based on newword in realtime
+wordWire.filter('score', function () {
+    return function (text) {
+        if (text !== undefined) {
+            text = text.toUpperCase();
+            scores = {
                 'A': 1,
                 'B': 3,
                 'C': 3,
@@ -94,41 +129,27 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
             };
 
             var sum = 0;
-            for (var i = 0; i < wordy.length; ++i) {
-                sum += scores[wordy.charAt(i)] || 0;
+            for (var i = 0; i < text.length; ++i) {
+                sum += scores[text.charAt(i)] || 0;
             }
-            $scope.words.newword.score = sum;
+            return sum;
         }
         else {
-            //if value is undefined then it will set the score to zero
-            //$scope.words.newword.score = 0;
-        }
-    });
-}]);
-
-//filter to catch the first letter of last word - not used, just for sake of learning
-wordWire.filter('firstlet', function () {
-    return function (text) {
-        if (text !== undefined) {
-            text = text.charAt(text.length - 1);
-            return text;
-        }
-        else {
-            return text;
+            return 0;
         }
     };
 });
 
-//filter to convert the string pattern to regex
-wordWire.filter('pattern', function () {
-    return function (text) {
-        if (text !== undefined) {
-            text = text.split("/");
-            text = new RegExp(text[1], text[2]);
-            return text;
-        }
-        else {
-            return text;
-        }
+//directive to submit based on enter key - copied from stackoverflow http://stackoverflow.com/questions/17470790/how-to-use-a-keypress-event-in-angularjs
+wordWire.directive('wwEnter', function () {
+    return function (scope, element, attrs) {
+        element.bind("keydown keypress", function (event) {
+            if (event.which === 13) {
+                scope.$apply(function () {
+                    scope.$eval(attrs.wwEnter);
+                });
+                event.preventDefault();
+            }
+        });
     };
 });
