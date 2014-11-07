@@ -74,8 +74,8 @@
 										</tr>
 									</thead>
 									<tbody>
-									<tr ng-repeat="(id,word) in words">
-										<td ng-bind="words[id].name">{{word.name}}</td>
+									<tr ng-repeat="(id,word) in words | orderBy: '-$id'">
+										<td>{{word.name}}</td>
 											<td>{{word.score}}</td>
 										</tr>
 									</tbody>
@@ -93,10 +93,10 @@
 		<!--Angular-->
 		<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
 		<!-- Firebase -->
-		<script src="https://cdn.firebase.com/js/client/1.0.21/firebase.js"></script>
+		<script src="https://cdn.firebase.com/js/client/2.0.2/firebase.js"></script>
 		<!-- AngularFire -->
 		<script src="https://cdn.firebase.com/libs/angularfire/0.8.2/angularfire.min.js"></script>
 		<!--Wordwire-->
-		<script src="js/appnew.js"></script>
+		<script src="js/appobj.js"></script>
 	</body>
 </html>

@@ -13,62 +13,58 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
     var wordref = $firebase(wref.limitToLast(5)).$asArray();
     var sref = new Firebase(FIREBASE_URI + "/stats");
     var statref = $firebase(sref);//can define $set only if it is not defined as Object or Array
-    var newref = new $window.Firebase(FIREBASE_URI + "/stats");// calling the Firebase Javascript SDK
-    var qref = new $window.Firebase(FIREBASE_URI + "/words");// calling the Firebase Javascript SDK
 
     //watch for change in value of lastword, firstletter and pattern and update the scope
-    newref.on("value", function (snap) {
+    sref.on("value", function (statssnapshot) {
         $timeout(function () {
-            $scope.stats = snap.val();//get value of firebase/stats
-            $scope.stats.pattern = $filter('pattern')(snap.val().pattern);//using filter to convert string to regex
+            $scope.stats = statssnapshot.val();//get value of firebase/stats
+            $scope.stats.pattern = $filter('pattern')(statssnapshot.val().pattern);//using filter to convert string to regex
         });
     });
 
     //load last 5 values of words and scores from firebase
-    wordref.$loaded().then(function (data) {
+    wordref.$loaded().then(function (wordlist) {
         //load data to words on promise
-        $scope.words = data;
+        $scope.words = wordlist;
+
         //initialize values
         $scope.words.newword = {name: '', score: ''};
 
         //this function is called on clicking the submit button
         $scope.words.addWord = function () {
+
             //create variables to update stats
             var lastword = $scope.words.newword.name;
             var firstletter = $filter('firstlet')(lastword);
             var pattern = "/^([" + firstletter + "])([A-Z])*$/i";
-            //query for existing word
-            console.log(lastword);
-            qref.orderByChild("name").equalTo(lastword).once("value", function (snapshot) {
 
-                    if (snapshot.val() == null) {
-                        console.log("data already exists");
+            //check if the word already exists in firebase
+            wref.orderByChild("name").equalTo(lastword).once("value", function (snapshot) {
+                    if (snapshot.val() !== null) {//if word exists in firebase
+                        $window.alert("word already exists chose another");
+                    }
+                    else {//if does not exist in firebase, add it
+                        wordref.$add(angular.copy($scope.words.newword)).then(function (nref) {
+                            var wid = nref.key();
+                            console.log("newword added successfully" + wid);
+                        });
+                        $timeout(function () { //update lastword, firstletter and patten based on newword
+                            statref.$set({
+                                    firstletter: firstletter,
+                                    lastword: lastword,
+                                    pattern: pattern
+                                }
+                            ).then(function (nref) {
+                                    $scope.stats.pattern = $filter('pattern')(pattern);
+                                    $scope.words.newword = {name: '', score: ''};//clear the ng-model newword
+                                });
+                        });
                     }
                 }, function (err) {
-                    //update new word
+                    $window.alert("snap! its my fault..try again please.");
                 }
             );
         };
-    });
-
-    wordref.$add(angular.copy($scope.words.newword)).then(function (nref) {
-        var wid = nref.key();
-        console.log("newword added successfully" + wid);
-        //var rec = wordref.$getRecord(wid);//record key of the new word
-        //console.log(rec.key);
-    });
-    $timeout(function () { //update lastword, firstletter and patten based on newword
-        statref.$set({
-                firstletter: firstletter,
-                lastword: lastword,
-                pattern: pattern
-            }
-        ).then(function (nref) {
-                $scope.stats.pattern = $filter('pattern')(pattern);
-                console.log($scope.stats.pattern);
-                //clear the newword ng-model
-                $scope.words.newword = {name: '', score: ''};
-            });
     });
 
     //watch for changes to input field ng-model=newword.name and compute newword.score
@@ -111,7 +107,7 @@ wordWire.filter('score', function () {
     return function (text) {
         if (text !== undefined) {
             text = text.toUpperCase();
-            scores = {
+            var scores = {
                 'A': 1,
                 'B': 3,
                 'C': 3,
