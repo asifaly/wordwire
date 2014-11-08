@@ -18,7 +18,7 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
     sref.on("value", function (statssnapshot) {
         $timeout(function () {
             $scope.stats = statssnapshot.val();//get value of firebase/stats
-            $scope.stats.pattern = $filter('pattern')(statssnapshot.val().pattern);//using filter to convert string to regex
+            $scope.stats.pattern = $filter('strtoregex')(statssnapshot.val().pattern);//using filter to convert string to regex
         });
     });
 
@@ -36,34 +36,51 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
             //create variables to update stats
             var lastword = $scope.words.newword.name;
             var firstletter = $filter('firstlet')(lastword);
-            var pattern = "/^([" + firstletter + "])([A-Z])*$/i";
+            var pattern = $filter('regtostr')($scope.stats.pattern, firstletter);
 
-            //check if the word already exists in firebase
-            wref.orderByChild("name").equalTo(lastword).once("value", function (snapshot) {
-                    if (snapshot.val() !== null) {//if word exists in firebase
-                        $window.alert("word already exists chose another");
-                    }
-                    else {//if does not exist in firebase, add it
-                        wordref.$add(angular.copy($scope.words.newword)).then(function (nref) {
-                            var wid = nref.key();
-                            console.log("newword added successfully" + wid);
-                        });
-                        $timeout(function () { //update lastword, firstletter and patten based on newword
-                            statref.$set({
-                                    firstletter: firstletter,
-                                    lastword: lastword,
-                                    pattern: pattern
-                                }
-                            ).then(function (nref) {
-                                    $scope.stats.pattern = $filter('pattern')(pattern);
-                                    $scope.words.newword = {name: '', score: ''};//clear the ng-model newword
+            //create variables for dictionary check
+            var dictcheck = $filter('uppercase')(lastword);
+            var firsttwo = $filter('uppercase')(lastword.substr(0, 2));
+            var dref = FIREBASE_URI + "dictionary/" + firsttwo;
+
+            //create new firebase instance, based on first 2 chars of new word
+            var dictref = new Firebase(dref);
+
+            //check if the word entered is a valid english word
+            dictref.orderByKey().startAt(dictcheck).endAt(dictcheck).on("value", function (snapshot) {
+                //if the word exists in the dictionary, i.e not equal to null
+                if (snapshot.val() !== null) {
+                    //check if the word already exists in firebase
+                    wref.orderByChild("name").equalTo(lastword).once("value", function (snapshot) {
+                            if (snapshot.val() !== null) {//if word exists in firebase
+                                $window.alert("word already exists chose another");
+                            }
+                            else {//if does not exist in firebase, add it
+                                wordref.$add(angular.copy($scope.words.newword)).then(function (nref) {
+                                    var wid = nref.key();
+                                    console.log("newword added successfully" + wid);
                                 });
-                        });
+                                $timeout(function () { //update lastword, firstletter and patten based on newword
+                                    statref.$set({
+                                            firstletter: firstletter,
+                                            lastword: lastword,
+                                            pattern: pattern
+                                        }
+                                    ).then(function (nref) {
+                                            $scope.stats.pattern = $filter('strtoregex')(pattern);
+                                            $scope.words.newword = {name: '', score: ''};//clear the ng-model newword
+                                        });
+                                });
+                            }
+                        }, function (err) {
+                            $window.alert("snap! its my fault..try again please.");
+                        }
+                    );
                     }
-                }, function (err) {
-                    $window.alert("snap! its my fault..try again please.");
-                }
-            );
+                else {
+                    $window.alert("word does not exist in my dictionary");
+                    }
+            });
         };
     });
 
@@ -89,11 +106,26 @@ wordWire.filter('firstlet', function () {
 });
 
 //filter to convert the string pattern to regex
-wordWire.filter('pattern', function () {
+wordWire.filter('strtoregex', function () {
     return function (text) {
         if (text !== undefined) {
             text = text.split("/");
             text = new RegExp(text[1], text[2]);
+            return text;
+        }
+        else {
+            return text;
+        }
+    };
+});
+
+//filter to convert the regex pattern to string to store in firebase
+wordWire.filter('regtostr', function () {
+    return function (text, first) {
+        if (text !== undefined) {
+            text = text.toString().split("");
+            text[4] = first;
+            text = text.join("");
             return text;
         }
         else {
