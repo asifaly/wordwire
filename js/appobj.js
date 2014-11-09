@@ -1,3 +1,4 @@
+//noinspection JSLint,JSHint
 /**
  * Created by asifa on 11/6/2014.
  */
@@ -9,23 +10,23 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
     $scope.stats.pattern = new RegExp();
 
     //defining firebase instances
-    var wref = new Firebase(FIREBASE_URI + "/words");
-    var wordref = $firebase(wref.limitToLast(5)).$asArray();
-    var sref = new Firebase(FIREBASE_URI + "/stats");
-    var statref = $firebase(sref);//can define $set only if it is not defined as Object or Array
+    var wRef = new Firebase(FIREBASE_URI + "/words"),
+        wordRef = $firebase(wRef.limitToLast(5)).$asArray(),
+        sRef = new Firebase(FIREBASE_URI + "/stats"),
+        statRef = $firebase(sRef);//can define $set only if it is not defined as Object or Array
 
-    //watch for change in value of lastword, firstletter and pattern and update the scope
-    sref.on("value", function (statssnapshot) {
+    //watch for change in value of lastWord, firstLetter and pattern and update the scope
+    sRef.on("value", function (statsSnapshot) {
         $timeout(function () {
-            $scope.stats = statssnapshot.val();//get value of firebase/stats
-            $scope.stats.pattern = $filter('strtoregex')(statssnapshot.val().pattern);//using filter to convert string to regex
+            $scope.stats = statsSnapshot.val();//get value of firebase/stats
+            $scope.stats.pattern = $filter('strtoregex')(statsSnapshot.val().pattern);//using filter to convert string to regex
         });
     });
 
     //load last 5 values of words and scores from firebase
-    wordref.$loaded().then(function (wordlist) {
+    wordRef.$loaded().then(function (wordList) {
         //load data to words on promise
-        $scope.words = wordlist;
+        $scope.words = wordList;
 
         //initialize values
         $scope.words.newword = {name: '', score: ''};
@@ -34,57 +35,56 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         $scope.words.addWord = function () {
 
             //create variables to update stats
-            var lastword = $scope.words.newword.name;
-            var firstletter = $filter('firstlet')(lastword);
-            var pattern = $filter('regtostr')($scope.stats.pattern, firstletter);
-
+            var lastWord = $scope.words.newword.name,
+                firstLetter = $filter('firstlet')(lastWord),
+                pattern = $filter('regtostr')($scope.stats.pattern, firstLetter),
             //create variables for dictionary check
-            var dictcheck = $filter('uppercase')(lastword);
-            var firsttwo = $filter('uppercase')(lastword.substr(0, 2));
-            var dref = FIREBASE_URI + "dictionary/" + firsttwo;
-
+                dictCheck = $filter('uppercase')(lastWord),
+                firstTwo = $filter('uppercase')(lastWord.substr(0, 2)),
+                dRef = FIREBASE_URI + "dictionary/" + firstTwo,
             //create new firebase instance, based on first 2 chars of new word
-            var dictref = new Firebase(dref);
+                dictRef = new Firebase(dRef),
+                wid = "";
 
             //check if the word entered is a valid english word
-            dictref.orderByKey().startAt(dictcheck).endAt(dictcheck).on("value", function (snapshot) {
+            dictRef.orderByKey().startAt(dictCheck).endAt(dictCheck).on("value", function (snapshot) {
                 //if the word exists in the dictionary, i.e not equal to null
                 if (snapshot.val() !== null) {
                     //check if the word already exists in firebase
-                    wref.orderByChild("name").equalTo(lastword).once("value", function (snapshot) {
+                    wRef.orderByChild("name").equalTo(lastWord).once("value", function (snapshot) {
                             if (snapshot.val() !== null) {//if word exists in firebase
                                 $window.alert("word already exists chose another");
                             }
                             else {//if does not exist in firebase, add it
-                                wordref.$add(angular.copy($scope.words.newword)).then(function (nref) {
-                                    var wid = nref.key();
+                                wordRef.$add(angular.copy($scope.words.newword)).then(function (nref) {
+                                    wid = nref.key();
                                     console.log("newword added successfully" + wid);
                                 });
-                                $timeout(function () { //update lastword, firstletter and patten based on newword
-                                    statref.$set({
-                                            firstletter: firstletter,
-                                            lastword: lastword,
+                                $timeout(function () { //update lastWord, firstLetter and patten based on newword
+                                    statRef.$set({
+                                            firstletter: firstLetter,
+                                            lastword: lastWord,
                                             pattern: pattern
                                         }
-                                    ).then(function (nref) {
+                                    ).then(function () {
                                             $scope.stats.pattern = $filter('strtoregex')(pattern);
                                             $scope.words.newword = {name: '', score: ''};//clear the ng-model newword
                                         });
                                 });
                             }
                         }, function (err) {
-                            $window.alert("snap! its my fault..try again please.");
+                            $window.alert("snap! its my fault..try again please." + err);
                         }
                     );
-                    }
+                }
                 else {
                     $window.alert("word does not exist in my dictionary");
-                    }
+                }
             });
         };
     });
 
-    //watch for changes to input field ng-model=newword.name and compute newword.score
+//watch for changes to input field ng-model=newword.name and compute newword.score
     $scope.$watch("words.newword.name", function (newValue) {
         if (newValue !== undefined) {
             $scope.words.newword.score = $filter('score')(newValue);
@@ -140,35 +140,35 @@ wordWire.filter('score', function () {
         if (text !== undefined) {
             text = text.toUpperCase();
             var scores = {
-                'A': 1,
-                'B': 3,
-                'C': 3,
-                'D': 2,
-                'E': 1,
-                'F': 4,
-                'G': 2,
-                'H': 4,
-                'I': 1,
-                'J': 8,
-                'K': 5,
-                'L': 1,
-                'M': 3,
-                'N': 1,
-                'O': 1,
-                'P': 3,
-                'Q': 10,
-                'R': 1,
-                'S': 1,
-                'T': 1,
-                'U': 1,
-                'V': 4,
-                'W': 4,
-                'X': 8,
-                'Y': 4,
-                'Z': 10
-            };
+                    'A': 1,
+                    'B': 3,
+                    'C': 3,
+                    'D': 2,
+                    'E': 1,
+                    'F': 4,
+                    'G': 2,
+                    'H': 4,
+                    'I': 1,
+                    'J': 8,
+                    'K': 5,
+                    'L': 1,
+                    'M': 3,
+                    'N': 1,
+                    'O': 1,
+                    'P': 3,
+                    'Q': 10,
+                    'R': 1,
+                    'S': 1,
+                    'T': 1,
+                    'U': 1,
+                    'V': 4,
+                    'W': 4,
+                    'X': 8,
+                    'Y': 4,
+                    'Z': 10
+                },
 
-            var sum = 0;
+                sum = 0;
             for (var i = 0; i < text.length; ++i) {
                 sum += scores[text.charAt(i)] || 0;
             }
