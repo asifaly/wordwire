@@ -1,102 +1,113 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<title>Word Wire</title>
-		<link href="css/wordw.css" rel="stylesheet">
-		<!-- Bootstrap CSS -->
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css">
-	</head>
-	<body ng-app="wordWire">
-		<div class="container">
-			<div ng-controller="WordCtrl">
-				<div class="row">
-					<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-						<div class ="page-header">
-							<h1><span class="glyphicon glyphicon-link"></span> Word Wire<small> realtime word chain!</small></h1>
-						</div>
-					</div>
-				</div>
-				<div class="row">
-					<div class="col-lg-4 col-md-6 col-sm-12 col-xs-12">
-						<div class="panel panel-default">
-							<div class="panel-heading">Enter New Word</div>
-							<div class="panel-body">
-								<form action="" method="POST" role="form" name="myForm" class="form-inline">
-									<div class="form-group">
-										<input type="text" name="word" id="input" class="form-control"
-											   ng-model="words.newword.name" placeholder="Enter an English Word"
-											   ng-pattern="stats.pattern" ng-minlength="2" ww-enter="words.addWord()"
-											   required>
-										<button type="button" class="btn btn-primary" ng-click="words.addWord()"
-												ng-disabled="myForm.word.$error.minlength || myForm.word.$error.pattern || myForm.$pristine || myForm.word.$error.required">
-											Submit
-										</button>
-										<div class="alert alert-warning" ng-show="myForm.word.$error.pattern" ng-cloak>Must begin with letter <strong>{{words[4].name | firstlet}}</strong> and contain letters A-Z or a-z only</div>
-									</div>
-									</form>
-									<div>
-										<table class="table table-condensed table-hover">
-											<thead>
-												<tr>
-													<th></th>
-													<th></th>
-												</tr>
-											</thead>
-											<tbody>
-												<tr>
-													<td><strong>Current Word Score : </strong></td>
-													<td ng-bind="words.newword.score"></td>
-												</tr>
-												<tr>
-													<td><strong>Last Word : </strong></td>
-													<td ng-bind="stats.lastword"></td>
-												</tr>
-												<tr>
-													<td><strong>Starting Letter : </strong></td>
-													<td ng-bind="stats.firstletter"></td>
-												</tr>
-											</tbody>
-										</table>
-									</div>
-							</div>
-						</div>
-					</div>
-					<div class="col-lg-4 col-md-6 col-sm-12 col-xs-12">
-						<div class="panel panel-default">
-							<!-- Default panel contents -->
-							<div class="panel-heading">Last 5 words</div>
-							<div class="table-responsive">
-								<table class="table table-hover">
-									<thead>
-										<tr>
-											<th>Word</th>
-											<th>Score</th>
-										</tr>
-									</thead>
-									<tbody>
-									<tr ng-repeat="(id,word) in words | orderBy: '-$id'">
-										<td>{{word.name}}</td>
-											<td>{{word.score}}</td>
-										</tr>
-									</tbody>
-								</table>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-		<!-- jQuery -->
-		<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
-		<!-- Bootstrap JavaScript -->
-		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
-		<!--Angular-->
-		<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
-		<!-- Firebase -->
-		<script src="https://cdn.firebase.com/js/client/2.0.2/firebase.js"></script>
-		<!-- AngularFire -->
-		<script src="https://cdn.firebase.com/libs/angularfire/0.8.2/angularfire.min.js"></script>
-		<!--Wordwire-->
-		<script src="js/app.js"></script>
-	</body>
+
+<head>
+    <title>Word Wire</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css">
+</head>
+
+<body ng-app="wordWire">
+<div class="container">
+    <div ng-controller="WordCtrl">
+        <div class="row">
+            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                <div class="page-header">
+                    <h1><span class="glyphicon glyphicon-link"></span> Word Wire
+                        <small> realtime word chain!</small>
+                    </h1>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-3 col-md-4 col-sm-12 col-xs-12">
+                <div class="panel panel-primary">
+                    <div class="panel-body">
+                        <div class="panel-heading">Play</div>
+                        <form name="myForm" class="form-inline" ng-submit="myForm.$valid && addWord()" novalidate>
+                            <div class="form-group"
+                                 ng-class="{ 'has-error' : myForm.word.$invalid && !myForm.word.$pristine }">
+                                <input type="text" name="word" id="input"
+                                       placeholder="Input an English Word and Hit Enter" class="form-control"
+                                       ng-model="newword.name" ng-minlength="2" ng-pattern="stats.pattern"
+                                       ng-required="true"/>
+
+                                <p ng-show="myForm.word.$error.required && !myForm.$pristine" class="help-block">Field
+                                    cannot be empty.</p>
+
+                                <p ng-show="myForm.word.$error.minlength" class="help-block">Word is too short.</p>
+
+                                <p ng-show="myForm.word.$error.pattern" class="help-block">Must begin with <strong>{{words[4].name
+                                    | firstlet}}</strong>.</p>
+
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-4 col-sm-12 col-xs-12">
+                <div class="panel panel-primary; border-radius: 20px">
+                    <div class="panel-heading">Word
+                    Score</div>
+                    <!-- Default panel contents -->
+                    <h2 align="center" ng-bind="newword.score"></h2>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-4 col-sm-12 col-xs-12">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">Starting
+                    Letter</div>
+                    <h2 align="center" ng-bind="stats.firstletter | uppercase"></h2>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-4 col-sm-12 col-xs-12">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">Last
+                    Word</div>
+                    <h2 align="center" ng-bind="stats.lastword | uppercase"></h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-4 col-sm-12 col-xs-12">
+            <div class="panel panel-default">
+                <!-- Default panel contents -->
+                <div class="panel-heading">Last
+                5
+                words</div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th>Word</th>
+                            <th>Score</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="(id,word) in words | orderBy: '-$id'">
+                            <td>{{word.name}}</td>
+                            <td>{{word.score}}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+<!-- Bootstrap JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+<!--Angular-->
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
+<!-- Firebase -->
+<script src="https://cdn.firebase.com/js/client/2.0.3/firebase.js"></script>
+<!-- AngularFire -->
+<script src="https://cdn.firebase.com/libs/angularfire/0.8.2/angularfire.min.js"></script>
+<!--Wordwire-->
+<script src="js/app.js"></script>
+</body>
+
 </html>
