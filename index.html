@@ -15,9 +15,9 @@
         <h1>Wordwire<small></small></h1>
     </div>
     <div class="btn-group" ng-controller="LoginCtrl">
-        <button type="button" class="btn btn-default" ng-click="facebook()">Facebook</button>
-        <button type="button" class="btn btn-default" ng-click="google()">Google</button>
-        <button type="button" class="btn btn-default" ng-click="twitter()">Twitter</button>
+        <button type="button" class="btn btn-default" ng-click="login("facebook")">Facebook</button>
+        <button type="button" class="btn btn-default" ng-click="login("google")">Google</button>
+        <button type="button" class="btn btn-default" ng-click="login("twitter")">Twitter</button>
         <button type="button" class="btn btn-default" ng-click="logout()">Logout</button>
         <p>User Name is : {{user.displayName}},{{user.uid}}, {{user.provider}}</p>
     </div>

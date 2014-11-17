@@ -17,18 +17,8 @@ wordWire.controller('LoginCtrl', ['$scope', '$firebase', '$window', 'FIREBASE_UR
         };
     };
 
-    $scope.google = function () {
-        uRef.authWithOAuthPopup("google", function (err, authData) {
-        });
-    };
-
-    $scope.facebook = function () {
-        uRef.authWithOAuthPopup("facebook", function (err, authData) {
-        });
-    };
-
-    $scope.twitter = function () {
-        uRef.authWithOAuthPopup("twitter", function (err, authData) {
+    $scope.login = function (provider) {
+        uRef.authWithOAuthPopup(provider, function (err, authData) {
         });
     };
 
