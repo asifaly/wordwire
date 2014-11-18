@@ -1,6 +1,8 @@
-/**
- * Created by asifa on 11/6/2014.
- */
+/*jslint devel: true, maxerr: 50*/
+/*global wordWire*/
+/*global angular*/
+/*global Firebase*/
+'use strict';
 var wordWire = angular.module('wordWire', ['firebase']);
 wordWire.constant('FIREBASE_URI', 'https://wordwire.firebaseio.com/');
 wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeout', '$window', '$filter',
@@ -18,7 +20,8 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         var wRef = new Firebase(FIREBASE_URI + "/words"),
             wordRef = $firebase(wRef.limitToLast(5)).$asArray(),
             sRef = new Firebase(FIREBASE_URI + "/stats"),
-            statRef = $firebase(sRef); //can define $set only if it is not defined as Object or Array
+            statRef = $firebase(sRef), //can define $set only if it is not defined as Object or Array
+            presenceRef = new Firebase(FIREBASE_URI + "/stats/disconnectmessage");
 
         //watch for change in value of lastWord, firstLetter and pattern and update the scope
         sRef.on("value", function (statssnapshot) {
@@ -28,7 +31,6 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
             });
         });
 
-        var presenceRef = new Firebase('https://wordwire.firebaseio.com/stats/disconnectmessage');
         // Write a string when this client loses connection
         presenceRef.onDisconnect().set("I disconnected!");
 
@@ -43,11 +45,11 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
                 var lastWord = $scope.newword.name,
                     firstLetter = $filter('firstlet')(lastWord),
                     pattern = $filter('regtostr')($scope.stats.pattern, firstLetter),
-                //create variables for dictionary check
+                    //create variables for dictionary check
                     dictCheck = $filter('uppercase')(lastWord),
                     firstTwo = $filter('uppercase')(lastWord.substr(0, 2)),
                     dRef = FIREBASE_URI + "dictionary/" + firstTwo,
-                //create new firebase instance, based on first 2 chars of new word
+                    //create new firebase instance, based on first 2 chars of new word
                     dictRef = new Firebase(dRef);
 
                 //check if the word entered is a valid english word
@@ -65,17 +67,18 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
                                 });
                                 $timeout(function () { //update lastWord, firstLetter and patten based on newword
                                     statRef.$set({
-                                            firstletter: firstLetter,
-                                            lastword: lastWord,
-                                            pattern: pattern
+                                        firstletter: firstLetter,
+                                        lastword: lastWord,
+                                        pattern: pattern
                                     }).then(function () {
-                                            $scope.stats.pattern = $filter('strtoregex')(pattern);
+                                        $scope.stats.pattern = $filter('strtoregex')(pattern);
                                         $scope.newword = {
                                             name: '',
                                             score: ''
                                         }; //clear the ng-model newword
+
                                         $scope.myForm.$setPristine(true);
-                                        });
+                                    });
                                 });
                             }
                         }, function (err) {
@@ -83,7 +86,7 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
                         });
                     } else {
                         $window.alert("word does not exist in my dictionary");
-                        }
+                    }
                 });
             };
         });
@@ -136,39 +139,39 @@ wordWire.filter('regtostr', function () {
 //filter to compute the wordscore based on newword in realtime
 wordWire.filter('score', function () {
     return function (text) {
+        var scores = {
+                'A': 1,
+                'B': 3,
+                'C': 3,
+                'D': 2,
+                'E': 1,
+                'F': 4,
+                'G': 2,
+                'H': 4,
+                'I': 1,
+                'J': 8,
+                'K': 5,
+                'L': 1,
+                'M': 3,
+                'N': 1,
+                'O': 1,
+                'P': 3,
+                'Q': 10,
+                'R': 1,
+                'S': 1,
+                'T': 1,
+                'U': 1,
+                'V': 4,
+                'W': 4,
+                'X': 8,
+                'Y': 4,
+                'Z': 10
+            },
+            sum = 0,
+            i;
         if (text !== undefined) {
             text = text.toUpperCase();
-            var scores = {
-                    'A': 1,
-                    'B': 3,
-                    'C': 3,
-                    'D': 2,
-                    'E': 1,
-                    'F': 4,
-                    'G': 2,
-                    'H': 4,
-                    'I': 1,
-                    'J': 8,
-                    'K': 5,
-                    'L': 1,
-                    'M': 3,
-                    'N': 1,
-                    'O': 1,
-                    'P': 3,
-                    'Q': 10,
-                    'R': 1,
-                    'S': 1,
-                    'T': 1,
-                    'U': 1,
-                    'V': 4,
-                    'W': 4,
-                    'X': 8,
-                    'Y': 4,
-                    'Z': 10
-                },
-                sum = 0;
-
-            for (var i = 0; i < text.length; ++i) {
+            for (i = 0; i < text.length; i += 1) {
                 sum += scores[text.charAt(i)] || 0;
             }
             return sum;
@@ -178,4 +181,3 @@ wordWire.filter('score', function () {
         }
     };
 });
-

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="en" ng-app="wordWire">
+<html lang="en" data-ng-app="wordWire">
+
 <head>
     <title>Title</title>
     <meta charset="UTF-8">
@@ -9,70 +10,72 @@
     <!-- Bootstrap CSS -->
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" rel="stylesheet" media="screen">
 </head>
+
 <body>
-<div class="container col-lg-12 col-md-12 col-sm-12 col-xs-12">
-    <div class="page-header">
-        <h1>Wordwire<small></small></h1>
-    </div>
-    <div class="btn-group" ng-controller="LoginCtrl">
-        <button type="button" class="btn btn-default" ng-click="login("facebook")">Facebook</button>
-        <button type="button" class="btn btn-default" ng-click="login("google")">Google</button>
-        <button type="button" class="btn btn-default" ng-click="login("twitter")">Twitter</button>
-        <button type="button" class="btn btn-default" ng-click="logout()">Logout</button>
-        <p>User Name is : {{user.displayName}},{{user.uid}}, {{user.provider}}</p>
-    </div>
-    <div class="panel panel-default" ng-controller="WordCtrl">
-        <div class="panel-heading">
-            <form name="myForm" class="form-inline panel-left" ng-submit="myForm.$valid && addWord()" novalidate>
-                <div class="form-group"
-                     ng-class="{ 'has-error' : myForm.word.$invalid && !myForm.word.$pristine }">
-                    <input type="text" name="word" id="input"
-                           placeholder="Input Word" class="form-control"
-                           ng-model="newword.name" ng-minlength="2" ng-pattern="stats.pattern"
-                           ng-required="true">
+    <div class="container col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="page-header">
+            <h1>Wordwire<small></small></h1>
+        </div>
+        <div class="btn-group" data-ng-controller="LoginCtrl">
+            <button type="button" class="btn btn-default" data-ng-click="login('facebook')">Facebook</button>
+            <button type="button" class="btn btn-default" data-ng-click="login('google')">Google</button>
+            <button type="button" class="btn btn-default" data-ng-click="login('twitter')">Twitter</button>
+            <button type="button" class="btn btn-default" data-ng-click="logout()">Logout</button>
+            <p>User Name is : {{user.displayName}},{{user.uid}}, {{user.provider}}</p>
+        </div>
+        <div class="panel panel-default" data-ng-controller="WordCtrl">
+            <div class="panel-heading">
+                <form name="myForm" class="form-inline panel-left" data-ng-submit="myForm.$valid && addWord()" novalidate>
+                    <div class="form-group" data-ng-class="{ 'has-error' : myForm.word.$invalid && !myForm.word.$pristine }">
+                        <input type="text" name="word" id="input" placeholder="Input Word" class="form-control" data-ng-model="newword.name" data-ng-minlength="2" data-ng-pattern="stats.pattern" data-ng-required="true">
 
-                    <p ng-hide="myForm.$invalid" class="help-block">Score : <span ng-bind="newword.score"></span></p>
+                        <p data-ng-hide="myForm.$invalid" class="help-block">Score : <span data-ng-bind="newword.score"></span>
+                        </p>
 
-                    <p ng-show="myForm.word.$error.required && !myForm.$pristine" class="help-block"> Field
-                        cannot be empty.</p>
+                        <p data-ng-show="myForm.word.$error.required && !myForm.$pristine" class="help-block">Field cannot be empty.</p>
 
-                    <p ng-show="myForm.word.$error.minlength" class="help-block"> Word is too short.</p>
+                        <p data-ng-show="myForm.word.$error.minlength" class="help-block">Word is too short.</p>
 
-                    <p ng-show="myForm.word.$error.pattern || myForm.word.$pristine" class="help-block"> Start word with letter <strong>{{words[4].name
+                        <p data-ng-show="myForm.word.$error.pattern || myForm.word.$pristine" class="help-block">Start word with letter <strong>{{words[4].name
                         | firstlet}}</strong>.</p>
 
-                </div>
-            </form>
+                    </div>
+                </form>
+            </div>
+            <div class="panel-body">
+                <ul class="nav nav-tabs" role="tablist">
+                    <li class="active"><a href="#">Words</a>
+                    </li>
+                    <li><a href="#">Players</a>
+                    </li>
+                    <li><a href="#">Chat</a>
+                    </li>
+                </ul>
+                <ul class="list-group">
+                    <li class="list-group-item" data-ng-repeat="(id,word) in words | orderBy: '-$id'">
+                        <span class="badge" data-ng-bind="word.score"></span>
+                        {{word.name}}
+                    </li>
+                </ul>
+            </div>
+            <div class="panel-footer"></div>
         </div>
-        <div class="panel-body" ng-show="newword.name == !undefined">
-            <ul class="nav nav-tabs" role="tablist">
-                <li class="active"><a href="#">Words</a></li>
-                <li><a href="#">Players</a></li>
-                <li><a href="#">Chat</a></li>
-            </ul>
-            <ul class="list-group">
-                <li class="list-group-item" ng-repeat="(id,word) in words | orderBy: '-$id'">
-                    <span class="badge" ng-bind="word.score"></span>
-                    {{word.name}}
-                </li>
-            </ul>
-        </div>
-        <div class="panel-footer"></div>
     </div>
-</div>
 
-<!-- jQuery -->
-<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
-<!-- Bootstrap JavaScript -->
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
-<!--Angular-->
-<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
-<!-- Firebase -->
-<script src="https://cdn.firebase.com/js/client/2.0.3/firebase.js"></script>
-<!-- AngularFire -->
-<script src="https://cdn.firebase.com/libs/angularfire/0.8.2/angularfire.min.js"></script>
-<!--Wordwire-->
-<script src="js/app.js"></script>
-<script src="js/login.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <!-- Bootstrap JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+    <!--Angular-->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
+    <!-- Firebase -->
+    <script src="https://cdn.firebase.com/js/client/2.0.3/firebase.js"></script>
+    <!-- AngularFire -->
+    <script src="https://cdn.firebase.com/libs/angularfire/0.8.2/angularfire.min.js"></script>
+    <!--Wordwire Main-->
+    <script src="js/app.js"></script>
+    <!--Wordwire Login-->
+    <script src="js/login.js"></script>
 </body>
+
 </html>
