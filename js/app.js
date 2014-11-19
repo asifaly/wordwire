@@ -16,7 +16,8 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         };
         $scope.user = {
             displayName: '',
-            uid: ''
+            uid: '',
+            avatar: ''
         };
 
         //defining firebase instances
@@ -25,17 +26,16 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
             sRef = new Firebase(FIREBASE_URI + "stats/"),
             statRef = $firebase(sRef), //can define $set only if it is not defined as Object or Array
             mainRef = new Firebase(FIREBASE_URI),
-            listRef = new Firebase(FIREBASE_URI + "presence/"),
-            uRef = new Firebase(FIREBASE_URI + "users/"),
-            usrRef = $firebase(uRef),
-            userRef = listRef.push(),
-            presenceRef = new Firebase(FIREBASE_URI + ".info/connected");
+            uRef = new Firebase(FIREBASE_URI),
+            amOnline = new Firebase(FIREBASE_URI + '.info/connected'),
+            usersRef = new Firebase(FIREBASE_URI + "users/");
 
         $scope.authObj = $firebaseAuth(mainRef);
 
         //logout user
         $scope.logout = function logout() {
             $scope.authObj.$unauth();
+            Firebase.goOffline();//go offline from firebase on logout to show only logged in online users
             $scope.user = {
                 displayName: '',
                 uid: ''
@@ -45,6 +45,15 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         //social login user
         $scope.login = function socialLogin(provider) {
             $scope.authObj.$authWithOAuthPopup(provider).then(function (authData) {
+                Firebase.goOnline();//go online on firebase when logged in
+                usersRef.child(authData.uid).once('value', function userFbSet(snapshot) {
+                    if (snapshot.val() !== null) {
+                        console.log("User Already Exists");
+                    } else {
+                        uRef.child('users').child(authData.uid).set(authData);
+                        console.log("New User" + "User ID: " + authData.uid + " created");
+                    }
+                });
                 console.log("Authentication Successful");
             }).catch(function (error) {
                 console.error("Authentication failed:", error);
@@ -54,20 +63,31 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         //onAuth update scope.user
         $scope.authObj.$onAuth(function (authData) {
             if (authData) {
+                //onlogin, presence will be updated to true i.e to show online users
+                amOnline.on('value', function (snapshot) {
+                    var presRef = new Firebase(FIREBASE_URI + 'presence/' + authData.uid);
+                    if (snapshot.val()) {
+                        presRef.onDisconnect().remove();
+                        presRef.set(true);
+                    }
+                });
                 if (authData.provider === 'google') {
                     $scope.user = {
                         displayName: authData.google.displayName,
-                        uid: authData.uid
+                        uid: authData.uid,
+                        avatar: authData.google.cachedUserProfile.picture
                     };
                 } else if (authData.provider === 'facebook') {
                     $scope.user = {
                         displayName: authData.facebook.displayName,
-                        uid: authData.uid
+                        uid: authData.uid,
+                        avatar: authData.facebook.cachedUserProfile.picture.data.url
                     };
                 } else if (authData.provider === 'twitter') {
                     $scope.user = {
                         displayName: authData.twitter.displayName,
-                        uid: authData.uid
+                        uid: authData.uid,
+                        avatar: authData.twitter.cachedUserProfile.profile_image_url_https
                     };
                 }
             } else {
@@ -150,88 +170,3 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
             $scope.newword.score = $filter('score')(newValue);
         });
     }]);
-
-//filter to catch the first letter of last word
-wordWire.filter('firstlet', function () {
-    return function (text) {
-        if (text !== undefined) {
-            text = text.charAt(text.length - 1);
-            return text;
-        } else {
-            return text;
-        }
-    };
-});
-
-//filter to convert the string pattern to regex
-wordWire.filter('strtoregex', function () {
-    return function (text) {
-        if (text !== undefined) {
-            text = text.split("/");
-            text = new RegExp(text[1], text[2]);
-            return text;
-        } else {
-            return text;
-        }
-    };
-});
-
-//filter to convert the regex pattern to string to store in firebase
-wordWire.filter('regtostr', function () {
-    return function (text, first) {
-        if (text !== undefined) {
-            text = text.toString().split("");
-            text[4] = first;
-            text = text.join("");
-            return text;
-        } else {
-            return text;
-        }
-    };
-});
-
-//filter to compute the wordscore based on newword in realtime
-wordWire.filter('score', function () {
-    return function (text) {
-        var scores = {
-                'A': 1,
-                'B': 3,
-                'C': 3,
-                'D': 2,
-                'E': 1,
-                'F': 4,
-                'G': 2,
-                'H': 4,
-                'I': 1,
-                'J': 8,
-                'K': 5,
-                'L': 1,
-                'M': 3,
-                'N': 1,
-                'O': 1,
-                'P': 3,
-                'Q': 10,
-                'R': 1,
-                'S': 1,
-                'T': 1,
-                'U': 1,
-                'V': 4,
-                'W': 4,
-                'X': 8,
-                'Y': 4,
-                'Z': 10
-            },
-            sum = 0,
-            i;
-        if (text !== undefined) {
-            text = text.toUpperCase();
-            for (i = 0; i < text.length; i += 1) {
-                sum += scores[text.charAt(i)] || 0;
-            }
-            return sum;
-        } else {
-            sum = 0;
-            return sum;
-        }
-    };
-});
