@@ -14,7 +14,7 @@ wordWire.controller('LoginCtrl', ['$scope', '$firebase', '$window', 'FIREBASE_UR
             provider: ''
         };
 
-        $scope.logout = function () {
+        $scope.logout = function userLogout() {
             uRef.unauth();
             $scope.user = {
                 displayName: '',
@@ -23,11 +23,11 @@ wordWire.controller('LoginCtrl', ['$scope', '$firebase', '$window', 'FIREBASE_UR
             };
         };
 
-        $scope.login = function (provider) {
+        $scope.login = function socialLogin(provider) {
             uRef.authWithOAuthPopup(provider, function (err, authData) {});
         };
 
-        $scope.email = function () {
+        $scope.email = function emlLogin() {
             var email = $scope.user.email,
                 password = $scope.user.password;
             uRef.createUser({
@@ -43,10 +43,10 @@ wordWire.controller('LoginCtrl', ['$scope', '$firebase', '$window', 'FIREBASE_UR
             });
         };
 
-        uRef.onAuth(function (authData) {
+        uRef.onAuth(function onAuthen(authData) {
             if (authData) {
                 setTimeout(function () {
-                    $scope.$apply(function () {
+                    $scope.$apply(function userScpSet() {
                         if (authData.provider === "google") {
                             $scope.user = {
                                 displayName: authData.google.displayName,
@@ -69,7 +69,7 @@ wordWire.controller('LoginCtrl', ['$scope', '$firebase', '$window', 'FIREBASE_UR
                     });
                 }, 100);
                 // user authenticated with Firebase
-                usersRef.child(authData.uid).once('value', function (snapshot) {
+                usersRef.child(authData.uid).once('value', function userFbSet(snapshot) {
                     if (snapshot.val() !== null) {
                         //$window.alert("User Already Exists");
                         console.log(authData);
