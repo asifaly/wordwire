@@ -20,12 +20,17 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         };
 
         //defining firebase instances
-        var wRef = new Firebase(FIREBASE_URI + "words"),
+        var wRef = new Firebase(FIREBASE_URI + "words/"),
             wordRef = $firebase(wRef.limitToLast(5)).$asArray(),
-            sRef = new Firebase(FIREBASE_URI + "stats"),
+            sRef = new Firebase(FIREBASE_URI + "stats/"),
             statRef = $firebase(sRef), //can define $set only if it is not defined as Object or Array
-            presenceRef = new Firebase(FIREBASE_URI + "stats/disconnectmessage"),
-            mainRef = new Firebase(FIREBASE_URI);
+            mainRef = new Firebase(FIREBASE_URI),
+            listRef = new Firebase(FIREBASE_URI + "presence/"),
+            uRef = new Firebase(FIREBASE_URI + "users/"),
+            usrRef = $firebase(uRef),
+            userRef = listRef.push(),
+            presenceRef = new Firebase(FIREBASE_URI + ".info/connected");
+
         $scope.authObj = $firebaseAuth(mainRef);
 
         //logout user
@@ -73,7 +78,7 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         //watch for change in value of lastWord, firstLetter and pattern and update the scope using regular firebase
         sRef.on("value", function statsFbGet(statssnapshot) {
             $timeout(function statsScopeSet() {
-                 //get value of firebase/stats
+                //get value of firebase/stats
                 $scope.stats = statssnapshot.val();
                 //using filter to convert string to regex
                 $scope.stats.pattern = $filter('strtoregex')(statssnapshot.val().pattern);
@@ -81,7 +86,7 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         });
 
         // Write a string when this client loses connection - for test purposes
-        presenceRef.onDisconnect().set("I disconnected!");
+        //presenceRef.onDisconnect().set("I disconnected!");
 
         //load last 5 values of words and scores from firebase using angularfire
         wordRef.$loaded().then(function wordsScopeSet(wordlist) {
