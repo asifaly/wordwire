@@ -1,0 +1,6 @@
+ <ul class="list-group">
+                    <li class="list-group-item" data-ng-repeat="(id,word) in words | orderBy: '-$id'">
+                        <span class="badge" data-ng-bind="word.score"></span>
+                        {{word.name}}
+                    </li>
+                </ul>

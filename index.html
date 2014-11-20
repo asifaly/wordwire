@@ -15,14 +15,11 @@
     <div class="container col-lg-12 col-md-12 col-sm-12 col-xs-12" data-ng-controller="WordCtrl">
         <div class="page-header">
             <h1>Wordwire<small></small></h1>
-            <p class="pull right" data-ng-hide="user.displayName == ''">Logged In As <a data-ng-href="" data-ng-click="logout()">{{user.displayName}}</a><img data-ng-src="{{user.avatar}}" height="45" width="45" alt="profile pic"/>
+            <p class="pull right" data-ng-hide="user.displayName == ''">Logged In As <a data-ng-href="" data-ng-click="logout()">{{user.displayName}}</a>
+                <img data-ng-src="{{user.avatar}}" height="45" width="45" alt="profile pic" />
             </p>
         </div>
-        <div class="btn-group" data-ng-hide="user.displayName !== ''">
-            <button type="button" class="btn btn-default" data-ng-click="login('facebook')">Facebook</button>
-            <button type="button" class="btn btn-default" data-ng-click="login('google')">Google</button>
-            <button type="button" class="btn btn-default" data-ng-click="login('twitter')">Twitter</button>
-
+        <div id = "loginbox" data-ng-hide="user.displayName !== ''" data-ng-include="'partials/login.html'">
         </div>
         <div class="panel panel-default" data-ng-hide="user.displayName == ''">
             <div class="panel-heading">
@@ -44,22 +41,30 @@
                 </form>
             </div>
             <div class="panel-body">
-                <ul class="nav nav-tabs" role="tablist">
-                    <li class="active"><a href="#">Words</a>
+                <ul class="nav nav-tabs" role="tablist" data-ng-init="activeTab = 'words'">
+                    <li class="active" data-ng-class="{'active': activeTab === 'words'}" data-ng-click="activeTab = 'words'"><a data-ng-href="">Words</a>
                     </li>
-                    <li><a href="#">Players</a>
+                    <li class="active" data-ng-class="{'active': activeTab === 'players'}" data-ng-click="activeTab = 'players'"><a data-ng-href="">Players</a>
                     </li>
-                    <li><a href="#">Chat</a>
-                    </li>
-                </ul>
-                <ul class="list-group">
-                    <li class="list-group-item" data-ng-repeat="(id,word) in words | orderBy: '-$id'">
-                        <span class="badge" data-ng-bind="word.score"></span>
-                        {{word.name}}
+                    <li class="active" data-ng-class="{'active': activeTab === 'chat'}" data-ng-click="activeTab = 'chat'"><a data-ng-href="">Chat</a>
                     </li>
                 </ul>
+                <div class="tab-content">
+                    <div data-ng-switch="activeTab">
+                        <div data-ng-switch-when="words">
+                            <div data-ng-include="'partials/words.html'"></div>
+                        </div>
+                        <div data-ng-switch-when="players">
+                            <div data-ng-include="'partials/players.html'"></div>
+                        </div>
+                        <div data-ng-switch-when="chat">
+                            <div data-ng-include="'partials/chat.html'"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="panel-footer"></div>
+            <div class="panel-footer">
+            </div>
         </div>
     </div>
 

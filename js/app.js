@@ -28,6 +28,8 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
             mainRef = new Firebase(FIREBASE_URI),
             uRef = new Firebase(FIREBASE_URI),
             amOnline = new Firebase(FIREBASE_URI + '.info/connected'),
+            oRef = new Firebase(FIREBASE_URI + "presence/"),
+            onlineRef = $firebase(oRef).$asArray(),
             usersRef = new Firebase(FIREBASE_URI + "users/");
 
         $scope.authObj = $firebaseAuth(mainRef);
@@ -35,7 +37,7 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         //logout user
         $scope.logout = function logout() {
             $scope.authObj.$unauth();
-            Firebase.goOffline();//go offline from firebase on logout to show only logged in online users
+            Firebase.goOffline(); //go offline from firebase on logout to show only logged in online users
             $scope.user = {
                 displayName: '',
                 uid: ''
@@ -45,7 +47,7 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         //social login user
         $scope.login = function socialLogin(provider) {
             $scope.authObj.$authWithOAuthPopup(provider).then(function (authData) {
-                Firebase.goOnline();//go online on firebase when logged in
+                Firebase.goOnline(); //go online on firebase when logged in
                 usersRef.child(authData.uid).once('value', function userFbSet(snapshot) {
                     if (snapshot.val() !== null) {
                         console.log("User Already Exists");
@@ -65,31 +67,27 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
             if (authData) {
                 //onlogin, presence will be updated to true i.e to show online users
                 amOnline.on('value', function (snapshot) {
-                    var presRef = new Firebase(FIREBASE_URI + 'presence/' + authData.uid);
+                    var presRef = new Firebase(FIREBASE_URI + 'presence/' + authData.uid),
+                        pRef = $firebase(presRef);
                     if (snapshot.val()) {
                         presRef.onDisconnect().remove();
-                        presRef.set(true);
+
+                        $scope.user.uid = authData.uid;
+                        $scope.user.online = true;
+
+                        if (authData.provider === 'google') {
+                            $scope.user.displayName = authData.google.displayName;
+                            $scope.user.avatar = authData.google.cachedUserProfile.picture;
+                        } else if (authData.provider === 'facebook') {
+                            $scope.user.displayName = authData.facebook.displayName;
+                            $scope.user.avatar = authData.facebook.cachedUserProfile.picture.data.url;
+                        } else if (authData.provider === 'twitter') {
+                            $scope.user.displayName = authData.twitter.displayName;
+                            $scope.user.avatar = authData.twitter.cachedUserProfile.profile_image_url_https;
+                        }
+                        pRef.$set($scope.user);
                     }
                 });
-                if (authData.provider === 'google') {
-                    $scope.user = {
-                        displayName: authData.google.displayName,
-                        uid: authData.uid,
-                        avatar: authData.google.cachedUserProfile.picture
-                    };
-                } else if (authData.provider === 'facebook') {
-                    $scope.user = {
-                        displayName: authData.facebook.displayName,
-                        uid: authData.uid,
-                        avatar: authData.facebook.cachedUserProfile.picture.data.url
-                    };
-                } else if (authData.provider === 'twitter') {
-                    $scope.user = {
-                        displayName: authData.twitter.displayName,
-                        uid: authData.uid,
-                        avatar: authData.twitter.cachedUserProfile.profile_image_url_https
-                    };
-                }
             } else {
                 console.log("Logged out");
             }
@@ -112,6 +110,10 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         wordRef.$loaded().then(function wordsScopeSet(wordlist) {
             //load data to words on promise
             $scope.words = wordlist;
+        });
+
+        onlineRef.$loaded().then(function onlineScopeSet(onlineList) {
+            $scope.onlineusers = onlineList;
         });
 
         //this function is called on clicking the submit button
