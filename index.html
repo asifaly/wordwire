@@ -41,8 +41,8 @@
                 </form>
             </div>
             <div class="panel-body">
-                <ul class="nav nav-tabs" role="tablist" data-ng-init="activeTab = 'words'">
-                    <li class="active" data-ng-class="{'active': activeTab === 'words'}" data-ng-click="activeTab = 'words'"><a data-ng-href="">Words</a>
+                <ul class="nav nav-tabs" role="tablist" data-ng-init="activeTab = 'wordlist'">
+                    <li class="active" data-ng-class="{'active': activeTab === 'wordlist'}" data-ng-click="activeTab = 'wordlist'"><a data-ng-href="">Words</a>
                     </li>
                     <li class="active" data-ng-class="{'active': activeTab === 'players'}" data-ng-click="activeTab = 'players'"><a data-ng-href="">Players</a>
                     </li>
@@ -51,7 +51,7 @@
                 </ul>
                 <div class="tab-content">
                     <div data-ng-switch="activeTab">
-                        <div data-ng-switch-when="words">
+                        <div data-ng-switch-when="wordlist">
                             <div data-ng-include="'partials/words.html'"></div>
                         </div>
                         <div data-ng-switch-when="players">
@@ -69,7 +69,8 @@
     </div>
 
     <!--Angular-->
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.27/angular.min.js"></script>
+    <script src="https://code.angularjs.org/1.2.27/angular-resource.min.js"></script>
     <!-- Firebase -->
     <script src="https://cdn.firebase.com/js/client/2.0.3/firebase.js"></script>
     <!-- AngularFire -->
@@ -79,5 +80,4 @@
     <!--Wordwire Filters-->
     <script src="js/filters.js"></script>
 </body>
-
 </html>

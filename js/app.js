@@ -3,10 +3,10 @@
 /*global angular*/
 /*global Firebase*/
 'use strict';
-var wordWire = angular.module('wordWire', ['firebase']);
+var wordWire = angular.module('wordWire', ['firebase', 'ngResource']);
 wordWire.constant('FIREBASE_URI', 'https://wordwire.firebaseio.com/');
-wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeout', '$window', '$filter', '$firebaseAuth',
-    function ($scope, $firebase, FIREBASE_URI, $timeout, $window, $filter, $firebaseAuth) {
+wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeout', '$window', '$filter', '$firebaseAuth', '$http',
+    function ($scope, $firebase, FIREBASE_URI, $timeout, $window, $filter, $firebaseAuth, $http) {
         //initialize pattern if it is not done, when app initializes, there is an error for invalid pattern
         $scope.stats = {};
         $scope.stats.pattern = new RegExp();
@@ -119,50 +119,43 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         //this function is called on clicking the submit button
         $scope.addWord = function wordsFbAdd() {
             //create variables to update stats
-            var lastWord = $scope.newword.name,
+            var lastWord = $filter('lowercase')($scope.newword.name),
                 firstLetter = $filter('firstlet')(lastWord),
                 pattern = $filter('regtostr')($scope.stats.pattern, firstLetter),
-                //create variables for dictionary check
-                dictCheck = $filter('uppercase')(lastWord),
-                firstTwo = $filter('uppercase')(lastWord.substr(0, 2)),
-                dRef = FIREBASE_URI + "dictionary/" + firstTwo,
-                //create new firebase instance, based on first 2 chars of new word
-                dictRef = new Firebase(dRef);
+                url = 'https://api.wordnik.com/v4/word.json/' + lastWord + '/definitions?limit=1&includeRelated=false&sourceDictionaries=webster%2Cwordnet&useCanonical=false&includeTags=false&api_key=9a67169ed9a424f1400000112af04acdc9cf96bea0fe263ed';
 
-            //check if the word entered is a valid english word using regular firebase
-            dictRef.orderByKey().startAt(dictCheck).endAt(dictCheck).on("value", function checkDict(snapshot) {
-                //if the word exists in the dictionary, i.e not equal to null
-                if (snapshot.val() !== null) {
-                    //check if the word already exists in firebase using regualr firebase
-                    wRef.orderByChild("name").equalTo(lastWord).once("value", function checkExists(snapshot) {
-                        if (snapshot.val() !== null) { //if word exists in firebase
-                            $window.alert("word already exists chose another");
-                        } else { //if does not exist in firebase, add it using angularfire
-                            wordRef.$add(angular.copy($scope.newword)).then(function getNewWordKey(nref) {
-                                var wid = nref.key();
-                                console.log("newword added successfully" + wid);
-                            });
-                            $timeout(function statsFbSet() { //update lastWord, firstLetter and pattern based on newword using angularfire
-                                statRef.$set({
-                                    firstletter: firstLetter,
-                                    lastword: lastWord,
-                                    pattern: pattern
-                                }).then(function statsScopeSet() {
-                                    //$scope.stats.pattern = $filter('strtoregex')(pattern);
-                                    $scope.newword = {
-                                        name: '',
-                                        score: ''
-                                    }; //clear the ng-model newword
-
-                                    $scope.myForm.$setPristine(true);
-                                });
-                            });
-                        }
-                    }, function (err) {
-                        $window.alert("snap! its my fault..try again please.");
-                    });
+            wRef.orderByChild("name").equalTo(lastWord).once("value", function checkExists(snapshot) {
+                if (snapshot.val() !== null) { //if word exists in firebase
+                    $window.alert("word already exists chose another");
                 } else {
-                    $window.alert("word does not exist in my dictionary");
+                    $http.get(url).
+                        success(function (data) {
+                            if (data.length > 0) {
+                                wordRef.$add(angular.copy($scope.newword)).then(function getNewWordKey(nref) {
+                                    var wid = nref.key();
+                                    $window.alert("newword added successfully");
+                                    console.log(wid);
+                                });
+                                $timeout(function statsFbSet() { //update lastWord, firstLetter and pattern to Firebase
+                                    statRef.$set({
+                                        firstletter: firstLetter,
+                                        lastword: lastWord,
+                                        pattern: pattern
+                                    }).then(function statsScopeSet() {
+                                        //$scope.stats.pattern = $filter('strtoregex')(pattern);
+                                        $scope.newword = {
+                                            name: '',
+                                            score: ''
+                                        }; //clear the ng-model newword
+                                        $scope.myForm.$setPristine(true);
+                                    });
+                                });
+                            } else {
+                                $window.alert("Dictionary says that's Gibberish! Not english");
+                            }
+                        }).error(function (status) {
+                            console.error("error " + status);
+                        });
                 }
             });
         };
