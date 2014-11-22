@@ -21,11 +21,11 @@
         </div>
         <div id = "loginbox" data-ng-hide="user.displayName !== ''" data-ng-include="'partials/login.html'">
         </div>
-        <div class="panel panel-default" data-ng-hide="user.displayName == ''">
+        <div class="panel panel-default" data-ng-hide="user.displayName == ''" data-ng-cloak>
             <div class="panel-heading">
-                <form name="myForm" class="form-inlinw" data-ng-submit="myForm.$valid && addWord()" novalidate>
+                <form name="myForm" class="form-inline" data-ng-submit="myForm.$valid && addWord()" novalidate>
                     <div class="form-group" data-ng-class="{ 'has-error' : myForm.word.$invalid && !myForm.word.$pristine }">
-                        <input type="text" name="word" id="input" placeholder="Input Word" class="form-control" data-ng-model="newword.name" data-ng-minlength="2" data-ng-pattern="stats.pattern" data-ng-required="true">
+                        <input type="text" name="word" id="input" placeholder="Input Word" class="form-control" data-ng-model="newword.name" data-ng-minlength="2" data-ng-pattern="stats.pattern" data-ng-required="true" data-ng-readonly="isReadOnly" data-ng-init="isReadOnly = false">
 
                         <p data-ng-hide="myForm.$invalid" class="help-block">Score : <span data-ng-bind="newword.score"></span>
                         </p>
@@ -34,7 +34,7 @@
 
                         <p data-ng-show="myForm.word.$error.minlength" class="help-block">Word is too short.</p>
 
-                        <p data-ng-show="myForm.word.$error.pattern || myForm.word.$pristine" class="help-block">Start word with letter <strong>{{words[4].name
+                        <p data-ng-show="myForm.word.$error.pattern || myForm.word.$pristine" class="help-block">Start word with letter <strong>{{words.slice(-1)[0].name
                         | firstlet}}</strong>.</p>
 
                     </div>

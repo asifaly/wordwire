@@ -22,17 +22,16 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
 
         //defining firebase instances
         var wRef = new Firebase(FIREBASE_URI + "words/"),
-            wordRef = $firebase(wRef.limitToLast(5)).$asArray(),
+            wordRef = $firebase(wRef).$asArray(),
             sRef = new Firebase(FIREBASE_URI + "stats/"),
             statRef = $firebase(sRef), //can define $set only if it is not defined as Object or Array
-            mainRef = new Firebase(FIREBASE_URI),
             uRef = new Firebase(FIREBASE_URI),
             amOnline = new Firebase(FIREBASE_URI + '.info/connected'),
             oRef = new Firebase(FIREBASE_URI + "presence/"),
             onlineRef = $firebase(oRef).$asArray(),
             usersRef = new Firebase(FIREBASE_URI + "users/");
 
-        $scope.authObj = $firebaseAuth(mainRef);
+        $scope.authObj = $firebaseAuth(uRef);
 
         //logout user
         $scope.logout = function logout() {
@@ -71,10 +70,8 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
                         pRef = $firebase(presRef);
                     if (snapshot.val()) {
                         presRef.onDisconnect().remove();
-
                         $scope.user.uid = authData.uid;
                         $scope.user.online = true;
-
                         if (authData.provider === 'google') {
                             $scope.user.displayName = authData.google.displayName;
                             $scope.user.avatar = authData.google.cachedUserProfile.picture;
@@ -103,9 +100,6 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
             });
         });
 
-        // Write a string when this client loses connection - for test purposes
-        //presenceRef.onDisconnect().set("I disconnected!");
-
         //load last 5 values of words and scores from firebase using angularfire
         wordRef.$loaded().then(function wordsScopeSet(wordlist) {
             //load data to words on promise
@@ -119,6 +113,8 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         //this function is called on clicking the submit button
         $scope.addWord = function wordsFbAdd() {
             //create variables to update stats
+            $scope.isReadOnly = true;
+
             var lastWord = $filter('lowercase')($scope.newword.name),
                 firstLetter = $filter('firstlet')(lastWord),
                 pattern = $filter('regtostr')($scope.stats.pattern, firstLetter),
