@@ -5,8 +5,8 @@
 'use strict';
 var wordWire = angular.module('wordWire', ['firebase']);
 wordWire.constant('FIREBASE_URI', 'https://wordwire.firebaseio.com/');
-wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeout', '$window', '$filter', '$firebaseAuth', 'dictService',
-    function ($scope, $firebase, FIREBASE_URI, $timeout, $window, $filter, $firebaseAuth, dictService) {
+wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeout', '$window', '$filter', '$firebaseAuth', 'wwService',
+    function ($scope, $firebase, FIREBASE_URI, $timeout, $window, $filter, $firebaseAuth, wwService) {
         //initialize pattern if it is not done, when app initializes, there is an error for invalid pattern
         $scope.stats = {};
         $scope.stats.pattern = new RegExp();
@@ -24,12 +24,10 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         var wRef = new Firebase(FIREBASE_URI + "words/"),
             wordRef = $firebase(wRef).$asArray(),
             sRef = new Firebase(FIREBASE_URI + "stats/"),
-            statRef = $firebase(sRef), //can define $set only if it is not defined as Object or Array
             uRef = new Firebase(FIREBASE_URI),
-            amOnline = new Firebase(FIREBASE_URI + '.info/connected'),
+            statRef = $firebase(sRef), //can define $set only if it is not defined as Object or Array
             oRef = new Firebase(FIREBASE_URI + "presence/"),
-            onlineRef = $firebase(oRef).$asArray(),
-            usersRef = new Firebase(FIREBASE_URI + "users/");
+            onlineRef = $firebase(oRef).$asArray();
 
         $scope.authObj = $firebaseAuth(uRef);
 
@@ -45,17 +43,9 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
 
         //social login user
         $scope.login = function socialLogin(provider) {
+            Firebase.goOnline();
             $scope.authObj.$authWithOAuthPopup(provider).then(function (authData) {
-                Firebase.goOnline(); //go online on firebase when logged in
-                usersRef.child(authData.uid).once('value', function userFbSet(snapshot) {
-                    if (snapshot.val() !== null) {
-                        console.log("User Already Exists");
-                    } else {
-                        uRef.child('users').child(authData.uid).set(authData);
-                        console.log("New User" + "User ID: " + authData.uid + " created");
-                    }
-                });
-                console.log("Authentication Successful");
+                wwService.addUser(authData).then(function (data) {})
             }).catch(function (error) {
                 console.error("Authentication failed:", error);
             });
@@ -65,25 +55,8 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         $scope.authObj.$onAuth(function (authData) {
             if (authData) {
                 //onlogin, presence will be updated to true i.e to show online users
-                amOnline.on('value', function (snapshot) {
-                    var presRef = new Firebase(FIREBASE_URI + 'presence/' + authData.uid),
-                        pRef = $firebase(presRef);
-                    if (snapshot.val()) {
-                        presRef.onDisconnect().remove();
-                        $scope.user.uid = authData.uid;
-                        $scope.user.online = true;
-                        if (authData.provider === 'google') {
-                            $scope.user.displayName = authData.google.displayName;
-                            $scope.user.avatar = authData.google.cachedUserProfile.picture;
-                        } else if (authData.provider === 'facebook') {
-                            $scope.user.displayName = authData.facebook.displayName;
-                            $scope.user.avatar = authData.facebook.cachedUserProfile.picture.data.url;
-                        } else if (authData.provider === 'twitter') {
-                            $scope.user.displayName = authData.twitter.displayName;
-                            $scope.user.avatar = authData.twitter.cachedUserProfile.profile_image_url_https;
-                        }
-                        pRef.$set($scope.user);
-                    }
+                wwService.presence(authData).then(function (data) {
+                    $scope.user = data;
                 });
             } else {
                 console.log("Logged out");
@@ -122,8 +95,9 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
             wRef.orderByChild("name").equalTo(lastWord).once("value", function checkExists(snapshot) {
                 if (snapshot.val() !== null) { //if word exists in firebase
                     $window.alert("word already exists chose another");
+                    $scope.isReadOnly = false;
                 } else {
-                    dictService.dictCheck(lastWord).then(function (data) {
+                    wwService.dictCheck(lastWord).then(function (data) {
                         if (data !== null) {
                             for (var attrname in data) {
                                 $scope.newword[attrname] = data[attrname];
@@ -149,9 +123,10 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
                                 });
                             });
                         } else {
-                            $window.alert("Dictionary says that's Gibberish! Not english");
                             $scope.isReadOnly = false;
                         }
+                    }).finally(function () {
+                        $scope.isReadOnly = false;
                     });
                 }
             });
@@ -163,9 +138,17 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         });
     }]);
 
-wordWire.factory('dictService', ['$http', '$log', '$q', '$window',
-        function ($http, $log, $q, $window) {
+wordWire.factory('wwService', ['$http', '$log', '$q', '$window', 'FIREBASE_URI', '$firebase',
+        function ($http, $log, $q, $window, FIREBASE_URI, $firebase) {
+
+        var deferred = $q.defer(),
+            wRef = new Firebase(FIREBASE_URI + "words/"),
+            uRef = new Firebase(FIREBASE_URI),
+            usersRef = new Firebase(FIREBASE_URI + "users/"),
+            amOnline = new Firebase(FIREBASE_URI + '.info/connected');
+
         return {
+            //check the word added exists in Firebase and if it is a valid word in dictionary
             dictCheck: function (lastWord) {
                 var deferred = $q.defer(),
                     url = 'https://api.wordnik.com/v4/word.json/' + lastWord + '/definitions?limit=1&includeRelated=false&sourceDictionaries=webster%2Cwordnet&useCanonical=false&includeTags=false&api_key=9a67169ed9a424f1400000112af04acdc9cf96bea0fe263ed';
@@ -180,13 +163,54 @@ wordWire.factory('dictService', ['$http', '$log', '$q', '$window',
                                 source: data[0].sourceDictionary
                             });
                         } else {
+                            $window.alert("Word Not Found in Dictionary");
                             deferred.resolve(null);
-                            $log.error("word not found");
                         }
                     }).error(function (msg, code) {
                         deferred.reject(msg);
                         $log.error(msg, code);
                     });
+                return deferred.promise;
+            },
+
+            //once user is logged in set the user presence to online and on logout remove presence
+            presence: function (authData) {
+                amOnline.on('value', function (snapshot) {
+                    var presRef = new Firebase(FIREBASE_URI + 'presence/' + authData.uid),
+                        user = {},
+                        pRef = $firebase(presRef);
+                    if (snapshot.val()) {
+                        presRef.onDisconnect().remove();
+                        if (authData.provider === 'google') {
+                            user.displayName = authData.google.displayName;
+                            user.avatar = authData.google.cachedUserProfile.picture;
+                        } else if (authData.provider === 'facebook') {
+                            user.displayName = authData.facebook.displayName;
+                            user.avatar = authData.facebook.cachedUserProfile.picture.data.url;
+                        } else if (authData.provider === 'twitter') {
+                            user.displayName = authData.twitter.displayName;
+                            user.avatar = authData.twitter.cachedUserProfile.profile_image_url_https;
+                        }
+                        user.uid = authData.uid;
+                        user.online = true;
+                        deferred.resolve(user);
+                        pRef.$set(user);
+                    }
+                });
+                return deferred.promise;
+            },
+
+            //add user if it does not exist in Firebase
+            addUser: function (authData) {
+                usersRef.child(authData.uid).once('value', function (snapshot) {
+                    if (snapshot.val() !== null) {
+                        $log.info("User Already Exists");
+                    } else {
+                        uRef.child('users').child(authData.uid).set(authData);
+                        $log.info("New User" + "User ID: " + authData.uid + " created");
+                    }
+                });
+                $log.info("Authentication Successful");
                 return deferred.promise;
             }
         };
