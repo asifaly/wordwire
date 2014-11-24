@@ -3,10 +3,10 @@
 /*global angular*/
 /*global Firebase*/
 'use strict';
-var wordWire = angular.module('wordWire', ['firebase', 'ngResource']);
+var wordWire = angular.module('wordWire', ['firebase']);
 wordWire.constant('FIREBASE_URI', 'https://wordwire.firebaseio.com/');
-wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeout', '$window', '$filter', '$firebaseAuth', '$http',
-    function ($scope, $firebase, FIREBASE_URI, $timeout, $window, $filter, $firebaseAuth, $http) {
+wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeout', '$window', '$filter', '$firebaseAuth', 'dictService',
+    function ($scope, $firebase, FIREBASE_URI, $timeout, $window, $filter, $firebaseAuth, dictService) {
         //initialize pattern if it is not done, when app initializes, there is an error for invalid pattern
         $scope.stats = {};
         $scope.stats.pattern = new RegExp();
@@ -61,7 +61,7 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
             });
         };
 
-        //onAuth update scope.user
+        //onAuth update$scope.user
         $scope.authObj.$onAuth(function (authData) {
             if (authData) {
                 //onlogin, presence will be updated to true i.e to show online users
@@ -90,9 +90,9 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
             }
         });
 
-        //watch for change in value of lastWord, firstLetter and pattern and update the scope using regular firebase
+        //watch for change in value of lastWord, firstLetter and pattern and update the$scope using regular firebase
         sRef.on("value", function statsFbGet(statssnapshot) {
-            $timeout(function statsScopeSet() {
+            $timeout(function statsscopeSet() {
                 //get value of firebase/stats
                 $scope.stats = statssnapshot.val();
                 //using filter to convert string to regex
@@ -101,57 +101,58 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         });
 
         //load last 5 values of words and scores from firebase using angularfire
-        wordRef.$loaded().then(function wordsScopeSet(wordlist) {
+        wordRef.$loaded().then(function wordsscopeSet(wordlist) {
             //load data to words on promise
             $scope.words = wordlist;
         });
 
-        onlineRef.$loaded().then(function onlineScopeSet(onlineList) {
+        onlineRef.$loaded().then(function onlinescopeSet(onlineList) {
             $scope.onlineusers = onlineList;
         });
 
-        //this function is called on clicking the submit button
+        //$scope function is called on clicking the submit button
         $scope.addWord = function wordsFbAdd() {
             //create variables to update stats
             $scope.isReadOnly = true;
 
             var lastWord = $filter('lowercase')($scope.newword.name),
                 firstLetter = $filter('firstlet')(lastWord),
-                pattern = $filter('regtostr')($scope.stats.pattern, firstLetter),
-                url = 'https://api.wordnik.com/v4/word.json/' + lastWord + '/definitions?limit=1&includeRelated=false&sourceDictionaries=webster%2Cwordnet&useCanonical=false&includeTags=false&api_key=9a67169ed9a424f1400000112af04acdc9cf96bea0fe263ed';
+                pattern = $filter('regtostr')($scope.stats.pattern, firstLetter);
 
             wRef.orderByChild("name").equalTo(lastWord).once("value", function checkExists(snapshot) {
                 if (snapshot.val() !== null) { //if word exists in firebase
                     $window.alert("word already exists chose another");
                 } else {
-                    $http.get(url).
-                        success(function (data) {
-                            if (data.length > 0) {
-                                wordRef.$add(angular.copy($scope.newword)).then(function getNewWordKey(nref) {
-                                    var wid = nref.key();
-                                    $window.alert("newword added successfully");
-                                    console.log(wid);
-                                });
-                                $timeout(function statsFbSet() { //update lastWord, firstLetter and pattern to Firebase
-                                    statRef.$set({
-                                        firstletter: firstLetter,
-                                        lastword: lastWord,
-                                        pattern: pattern
-                                    }).then(function statsScopeSet() {
-                                        //$scope.stats.pattern = $filter('strtoregex')(pattern);
-                                        $scope.newword = {
-                                            name: '',
-                                            score: ''
-                                        }; //clear the ng-model newword
-                                        $scope.myForm.$setPristine(true);
-                                    });
-                                });
-                            } else {
-                                $window.alert("Dictionary says that's Gibberish! Not english");
+                    dictService.dictCheck(lastWord).then(function (data) {
+                        if (data !== null) {
+                            for (var attrname in data) {
+                                $scope.newword[attrname] = data[attrname];
                             }
-                        }).error(function (status) {
-                            console.error("error " + status);
-                        });
+                            wordRef.$add(angular.copy($scope.newword)).then(function getNewWordKey(nref) {
+                                var wid = nref.key();
+                                $window.alert("newword added successfully");
+                                $scope.isReadOnly = false;
+                                console.log(wid);
+                            });
+                            $timeout(function statsFbSet() { //update lastWord, firstLetter and pattern to Firebase
+                                statRef.$set({
+                                    firstletter: firstLetter,
+                                    lastword: lastWord,
+                                    pattern: pattern
+                                }).then(function stat$scopeSet() {
+                                    //$scope.stats.pattern = $filter('strtoregex')(pattern);
+                                    $scope.newword = {
+                                        name: '',
+                                        score: ''
+                                    }; //clear the ng-model newword
+                                    $scope.myForm.$setPristine(true);
+                                });
+                            });
+                        } else {
+                            $window.alert("Dictionary says that's Gibberish! Not english");
+                            $scope.isReadOnly = false;
+                        }
+                    });
                 }
             });
         };
@@ -160,4 +161,33 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         $scope.$watch("newword.name", function (newValue, oldValue) {
             $scope.newword.score = $filter('score')(newValue);
         });
+    }]);
+
+wordWire.factory('dictService', ['$http', '$log', '$q', '$window',
+        function ($http, $log, $q, $window) {
+        return {
+            dictCheck: function (lastWord) {
+                var deferred = $q.defer(),
+                    url = 'https://api.wordnik.com/v4/word.json/' + lastWord + '/definitions?limit=1&includeRelated=false&sourceDictionaries=webster%2Cwordnet&useCanonical=false&includeTags=false&api_key=9a67169ed9a424f1400000112af04acdc9cf96bea0fe263ed';
+                $http.get(url)
+                    .success(function (data) {
+                        if (data.length > 0) {
+                            deferred.resolve({
+                                name: data[0].word,
+                                definition: data[0].text,
+                                pos: data[0].partOfSpeech,
+                                attr: data[0].attributionText,
+                                source: data[0].sourceDictionary
+                            });
+                        } else {
+                            deferred.resolve(null);
+                            $log.error("word not found");
+                        }
+                    }).error(function (msg, code) {
+                        deferred.reject(msg);
+                        $log.error(msg, code);
+                    });
+                return deferred.promise;
+            }
+        };
     }]);
