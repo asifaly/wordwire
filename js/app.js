@@ -5,8 +5,8 @@
 'use strict';
 var wordWire = angular.module('wordWire', ['firebase']);
 wordWire.constant('FIREBASE_URI', 'https://wordwire.firebaseio.com/');
-wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeout', '$window', '$filter', '$firebaseAuth', 'wwService',
-    function ($scope, $firebase, FIREBASE_URI, $timeout, $window, $filter, $firebaseAuth, wwService) {
+wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeout', '$window', '$filter', '$firebaseAuth', 'UserService', 'WordsService',
+    function ($scope, $firebase, FIREBASE_URI, $timeout, $window, $filter, $firebaseAuth, UserService, WordsService) {
         //initialize pattern if it is not done, when app initializes, there is an error for invalid pattern
         $scope.stats = {};
         $scope.stats.pattern = new RegExp();
@@ -21,13 +21,8 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         };
 
         //defining firebase instances
-        var wRef = new Firebase(FIREBASE_URI + "words/"),
-            wordRef = $firebase(wRef).$asArray(),
-            sRef = new Firebase(FIREBASE_URI + "stats/"),
-            uRef = new Firebase(FIREBASE_URI),
-            statRef = $firebase(sRef), //can define $set only if it is not defined as Object or Array
-            oRef = new Firebase(FIREBASE_URI + "presence/"),
-            onlineRef = $firebase(oRef).$asArray();
+        var sRef = new Firebase(FIREBASE_URI + "stats/"),
+            uRef = new Firebase(FIREBASE_URI);
 
         $scope.authObj = $firebaseAuth(uRef);
 
@@ -45,9 +40,11 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         $scope.login = function socialLogin(provider) {
             Firebase.goOnline();
             $scope.authObj.$authWithOAuthPopup(provider).then(function (authData) {
-                wwService.addUser(authData).then(function (data) {})
-            }).catch(function (error) {
-                console.error("Authentication failed:", error);
+                UserService.addUser(authData).then(function (data) {
+                    console.info("Login Complete");
+                }).catch(function (error) {
+                    console.error("Authentication failed:", error);
+                });
             });
         };
 
@@ -55,7 +52,7 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         $scope.authObj.$onAuth(function (authData) {
             if (authData) {
                 //onlogin, presence will be updated to true i.e to show online users
-                wwService.presence(authData).then(function (data) {
+                UserService.presence(authData).then(function (data) {
                     $scope.user = data;
                 });
             } else {
@@ -73,15 +70,10 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
             });
         });
 
-        //load last 5 values of words and scores from firebase using angularfire
-        wordRef.$loaded().then(function wordsscopeSet(wordlist) {
-            //load data to words on promise
-            $scope.words = wordlist;
-        });
-
-        onlineRef.$loaded().then(function onlinescopeSet(onlineList) {
-            $scope.onlineusers = onlineList;
-        });
+        //load values of words, scores and connected users from firebase
+        $scope.words = WordsService.getWords();
+        $scope.onlineusers = UserService.getOnline();
+        //$scope.stats = WordsService.getStats();
 
         //$scope function is called on clicking the submit button
         $scope.addWord = function wordsFbAdd() {
@@ -92,43 +84,31 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
                 firstLetter = $filter('firstlet')(lastWord),
                 pattern = $filter('regtostr')($scope.stats.pattern, firstLetter);
 
-            wRef.orderByChild("name").equalTo(lastWord).once("value", function checkExists(snapshot) {
-                if (snapshot.val() !== null) { //if word exists in firebase
-                    $window.alert("word already exists chose another");
-                    $scope.isReadOnly = false;
-                } else {
-                    wwService.dictCheck(lastWord).then(function (data) {
-                        if (data !== null) {
-                            for (var attrname in data) {
-                                $scope.newword[attrname] = data[attrname];
-                            }
-                            wordRef.$add(angular.copy($scope.newword)).then(function getNewWordKey(nref) {
-                                var wid = nref.key();
-                                $window.alert("newword added successfully");
-                                $scope.isReadOnly = false;
-                                console.log(wid);
-                            });
-                            $timeout(function statsFbSet() { //update lastWord, firstLetter and pattern to Firebase
-                                statRef.$set({
-                                    firstletter: firstLetter,
-                                    lastword: lastWord,
-                                    pattern: pattern
-                                }).then(function stat$scopeSet() {
-                                    //$scope.stats.pattern = $filter('strtoregex')(pattern);
-                                    $scope.newword = {
-                                        name: '',
-                                        score: ''
-                                    }; //clear the ng-model newword
-                                    $scope.myForm.$setPristine(true);
-                                });
-                            });
-                        } else {
-                            $scope.isReadOnly = false;
-                        }
-                    }).finally(function () {
+            WordsService.checkWord(lastWord).then(function (data) {
+                WordsService.dictCheck(lastWord).then(function (data) {
+                    for (var attrname in data) {
+                        $scope.newword[attrname] = data[attrname];
+                    }
+
+                    WordsService.addWord(angular.copy($scope.newword)).then(function (nref) {
+                        $window.alert("New Word added at " + nref);
                         $scope.isReadOnly = false;
+                        $scope.newword = {
+                            name: '',
+                            score: ''
+                        }; //clear the ng-model newword
+                        $scope.myForm.$setPristine(true);
                     });
-                }
+
+                    WordsService.setStats(lastWord, pattern, firstLetter).then(function (stref) {
+                        console.info("stats added at " + stref);
+                    });
+                }).catch(function (error) {
+                    $window.alert(error);
+                });
+            }).catch(function (error) {
+                $window.alert(error);
+                $scope.isReadOnly = false;
             });
         };
 
@@ -138,43 +118,19 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         });
     }]);
 
-wordWire.factory('wwService', ['$http', '$log', '$q', '$window', 'FIREBASE_URI', '$firebase',
-        function ($http, $log, $q, $window, FIREBASE_URI, $firebase) {
+wordWire.factory('UserService', ['$log', '$q', 'FIREBASE_URI', '$firebase',
+        function ($log, $q, FIREBASE_URI, $firebase) {
 
-        var deferred = $q.defer(),
-            wRef = new Firebase(FIREBASE_URI + "words/"),
-            uRef = new Firebase(FIREBASE_URI),
+        var uRef = new Firebase(FIREBASE_URI),
             usersRef = new Firebase(FIREBASE_URI + "users/"),
-            amOnline = new Firebase(FIREBASE_URI + '.info/connected');
+            amOnline = new Firebase(FIREBASE_URI + '.info/connected'),
+            oRef = new Firebase(FIREBASE_URI + "presence/"),
+            onlineRef = $firebase(oRef).$asArray();
 
         return {
-            //check the word added exists in Firebase and if it is a valid word in dictionary
-            dictCheck: function (lastWord) {
-                var deferred = $q.defer(),
-                    url = 'https://api.wordnik.com/v4/word.json/' + lastWord + '/definitions?limit=1&includeRelated=false&sourceDictionaries=webster%2Cwordnet&useCanonical=false&includeTags=false&api_key=9a67169ed9a424f1400000112af04acdc9cf96bea0fe263ed';
-                $http.get(url)
-                    .success(function (data) {
-                        if (data.length > 0) {
-                            deferred.resolve({
-                                name: data[0].word,
-                                definition: data[0].text,
-                                pos: data[0].partOfSpeech,
-                                attr: data[0].attributionText,
-                                source: data[0].sourceDictionary
-                            });
-                        } else {
-                            $window.alert("Word Not Found in Dictionary");
-                            deferred.resolve(null);
-                        }
-                    }).error(function (msg, code) {
-                        deferred.reject(msg);
-                        $log.error(msg, code);
-                    });
-                return deferred.promise;
-            },
-
             //once user is logged in set the user presence to online and on logout remove presence
             presence: function (authData) {
+                var deferred = $q.defer();
                 amOnline.on('value', function (snapshot) {
                     var presRef = new Firebase(FIREBASE_URI + 'presence/' + authData.uid),
                         user = {},
@@ -202,6 +158,7 @@ wordWire.factory('wwService', ['$http', '$log', '$q', '$window', 'FIREBASE_URI',
 
             //add user if it does not exist in Firebase
             addUser: function (authData) {
+                var deferred = $q.defer();
                 usersRef.child(authData.uid).once('value', function (snapshot) {
                     if (snapshot.val() !== null) {
                         $log.info("User Already Exists");
@@ -211,6 +168,91 @@ wordWire.factory('wwService', ['$http', '$log', '$q', '$window', 'FIREBASE_URI',
                     }
                 });
                 $log.info("Authentication Successful");
+                return deferred.promise;
+            },
+
+            getOnline: function () {
+                return onlineRef;
+            }
+        };
+    }]);
+
+wordWire.factory('WordsService', ['$http', '$log', '$q', '$window', 'FIREBASE_URI', '$firebase', '$filter',
+        function ($http, $log, $q, $window, FIREBASE_URI, $firebase, $filter) {
+
+        var wRef = new Firebase(FIREBASE_URI + "words/"),
+            wordRef = $firebase(wRef).$asArray(),
+            sRef = new Firebase(FIREBASE_URI + "stats/"),
+            statRef = $firebase(sRef);
+
+        return {
+            //check the word added exists in Firebase and if it is a valid word in dictionary
+            dictCheck: function (lastWord) {
+                var deferred = $q.defer(),
+                    url = 'https://api.wordnik.com/v4/word.json/' + lastWord + '/definitions?limit=1&includeRelated=false&sourceDictionaries=webster%2Cwordnet&useCanonical=false&includeTags=false&api_key=9a67169ed9a424f1400000112af04acdc9cf96bea0fe263ed';
+                $http.get(url)
+                    .success(function (data) {
+                        if (data.length > 0) {
+                            deferred.resolve({
+                                name: data[0].word,
+                                definition: data[0].text,
+                                pos: data[0].partOfSpeech,
+                                attr: data[0].attributionText,
+                                source: data[0].sourceDictionary
+                            });
+                        } else {
+                            deferred.reject(new Error("Word Not Found in Dictionary"));
+                        }
+                    }).error(function (msg, code) {
+                        deferred.reject(msg);
+                        $log.error(msg, code);
+                    });
+                return deferred.promise;
+            },
+
+            getWords: function () {
+                return wordRef;
+            },
+
+            /*            getStats: function () {
+                statRef.pattern = $filter('strtoregex')(statRef.pattern);
+                $log.info(statRef);
+                $log.info(statRef.pattern);
+                return statRef;
+            },*/
+
+            addWord: function (word) {
+                var deferred = $q.defer();
+                wordRef.$add(word).then(function (nref) {
+                    $log.info(nref.key());
+                    deferred.resolve(nref.key());
+                });
+                return deferred.promise;
+            },
+
+            checkWord: function (word) {
+                var deferred = $q.defer();
+                wRef.orderByChild("name").equalTo(word).once("value", function (snapshot) {
+                    if (snapshot.val() !== null) { //if word exists in firebase
+                        deferred.reject(new Error("Word already exists chose another"));
+                    } else {
+                        deferred.resolve();
+                    }
+                });
+                return deferred.promise;
+            },
+
+            setStats: function (lastWord, pattern, firstLetter) {
+                var deferred = $q.defer();
+                statRef.$set({
+                    firstletter: firstLetter,
+                    lastword: lastWord,
+                    pattern: pattern
+                }).then(function (stref) {
+                    deferred.resolve(stref.key());
+                }).catch(function (error) {
+                    deferred.reject(new Error("Stats Could not be updated"));
+                });
                 return deferred.promise;
             }
         };
