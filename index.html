@@ -7,78 +7,59 @@
     <meta name=description content="">
     <meta name=viewport content="width=device-width, initial-scale=1">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Bootstrap CSS -->
+<!--    <script src="//fast.eager.io/JrWfTtHtSS.js"></script>-->
+    <link rel="stylesheet" href="css/main.css" />
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" rel="stylesheet" media="screen">
 </head>
 
 <body>
-    <div class="container col-lg-12 col-md-12 col-sm-12 col-xs-12" data-ng-controller="WordCtrl">
+    <div class="container col-lg-12 col-md-12 col-sm-12 col-xs-12" data-ng-controller="WordCtrl" data-ng-cloak>
         <div class="page-header">
             <h1>Wordwire<small></small></h1>
-            <p class="pull right" data-ng-hide="user.displayName == ''">Logged In As <a data-ng-href="" data-ng-click="logout()">{{user.displayName}}</a>
-                <img data-ng-src="{{user.avatar}}" height="45" width="45" alt="profile pic" />
+            <p class="pull right" data-ng-hide="user.displayName == ''">Logout <a data-ng-href="" data-ng-click="logout()">{{user.displayName}}</a>
+                <img data-ng-src="{{user.avatar}}" height="45" width="45" alt="profile pic" class="picy" />
             </p>
         </div>
-        <div id = "loginbox" data-ng-hide="user.displayName !== ''" data-ng-include="'partials/login.html'">
+        <div class="tabs">
+            <ul class="nav nav-tabs" role="tablist" data-ng-init="activeTab = login">
+                <li class="active" data-ng-class="{'active': activeTab === 'login'}" data-ng-click="activeTab = 'login'" data-ng-hide="user.displayName !== ''"><a data-ng-href="#/login">Login</a>
+                </li>
+                <li class="active" data-ng-class="{'active': activeTab === 'game'}" data-ng-click="activeTab = 'game'"><a data-ng-href="#/game">Game</a>
+                </li>
+                <li class="active" data-ng-class="{'active': activeTab === 'wist'}" data-ng-click="activeTab = 'wist'"><a data-ng-href="#/words">Words</a>
+                </li>
+                <li class="active" data-ng-class="{'active': activeTab === 'players'}" data-ng-click="activeTab = 'players'"><a data-ng-href="#/players">Players</a>
+                </li>
+            </ul>
         </div>
-        <div class="panel panel-default" data-ng-hide="user.displayName == ''" data-ng-cloak>
-            <div class="panel-heading">
-                <form name="myForm" class="form-inline" data-ng-submit="myForm.$valid && addWord()" novalidate>
-                    <div class="form-group" data-ng-class="{ 'has-error' : myForm.word.$invalid && !myForm.word.$pristine }">
-                        <input type="text" name="word" id="input" placeholder="Input Word" class="form-control" data-ng-model="newword.name" data-ng-minlength="2" data-ng-pattern="stats.pattern" data-ng-required="true" data-ng-readonly="isReadOnly" data-ng-init="isReadOnly = false">
-
-                        <p data-ng-hide="myForm.$invalid" class="help-block">Score : <span data-ng-bind="newword.score"></span>
-                        </p>
-
-                        <p data-ng-show="myForm.word.$error.required && !myForm.$pristine" class="help-block">Field cannot be empty.</p>
-
-                        <p data-ng-show="myForm.word.$error.minlength" class="help-block">Word is too short.</p>
-
-                        <p data-ng-show="myForm.word.$error.pattern || myForm.word.$pristine" class="help-block">Start word with letter <strong>{{words.slice(-1)[0].name
-                        | firstlet}}</strong>.</p>
-
-                    </div>
-                </form>
-            </div>
-            <div class="panel-body">
-                <ul class="nav nav-tabs" role="tablist" data-ng-init="activeTab = 'wist'">
-                    <li class="active" data-ng-class="{'active': activeTab === 'wist'}" data-ng-click="activeTab = 'wist'"><a data-ng-href="">Words</a>
-                    </li>
-                    <li class="active" data-ng-class="{'active': activeTab === 'players'}" data-ng-click="activeTab = 'players'"><a data-ng-href="">Players</a>
-                    </li>
-                    <li class="active" data-ng-class="{'active': activeTab === 'chat'}" data-ng-click="activeTab = 'chat'"><a data-ng-href="">Chat</a>
-                    </li>
-                </ul>
-                <div class="tab-content">
-                    <div data-ng-switch="activeTab">
-                        <div data-ng-switch-when="wist">
-                            <div data-ng-include="'partials/words.html'"></div>
-                        </div>
-                        <div data-ng-switch-when="players">
-                            <div data-ng-include="'partials/players.html'"></div>
-                        </div>
-                        <div data-ng-switch-when="chat">
-                            <div data-ng-include="'partials/chat.html'"></div>
-                        </div>
-                    </div>
+        <div class="tab-content">
+<!--
+            <div data-ng-switch="activeTab">
+                <div data-ng-switch-when="login">
+                    <div data-ng-include="'partials/login.html'"></div>
+                </div>
+                <div data-ng-switch-when="game">
+                    <div data-ng-include="'partials/game.html'"></div>
+                </div>
+                <div data-ng-switch-when="wist">
+                    <div data-ng-include="'partials/words.html'"></div>
+                </div>
+                <div data-ng-switch-when="players">
+                    <div data-ng-include="'partials/players.html'"></div>
                 </div>
             </div>
-            <div class="panel-footer">
-            </div>
+-->
         </div>
+        <div ng-view></div>
     </div>
 
-    <!--Angular-->
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.27/angular.min.js"></script>
-    <!-- Firebase -->
     <script src="https://cdn.firebase.com/js/client/2.0.3/firebase.js"></script>
-    <!-- AngularFire -->
     <script src="https://cdn.firebase.com/libs/angularfire/0.9.0/angularfire.min.js"></script>
-    <!--Wordwire Main-->
+    <script src="https://code.angularjs.org/1.2.27/angular-route.min.js"></script>
     <script src="js/app.js"></script>
-    <!--Wordwire Filters-->
     <script src="js/filters.js"></script>
-    <!--Wordwire Filters-->
     <script src="js/services.js"></script>
 </body>
+
 </html>

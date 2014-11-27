@@ -1,0 +1,13 @@
+<div class="row">
+    <div class="container col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <form name="theForm" class="form-horizontal" data-ng-submit="theForm.$valid && addWord()" novalidate>
+            <div class="input-group" data-ng-class="{ 'has-error' : theForm.word.$invalid && !theForm.word.$pristine }">
+                <input type="text" name="word" id="input" placeholder="Input Word" class="form-control" data-ng-model="newword.name" data-ng-minlength="2" data-ng-pattern="stats.pattern" data-ng-required="true" data-ng-readonly="is.ReadOnly" data-ng-init="isReadOnly = false"><span class="input-group-addon" data-ng-bind="newword.score"></span>
+            </div>
+            <p data-ng-show="theForm.word.$error.required && !theForm.$pristine" class="help-block">Field cannot be empty.</p>
+            <p data-ng-show="theForm.$valid" class="help-block">Awesome! Hit Enter/Return Key when done!</p>
+            <p data-ng-show="theForm.word.$error.minlength" class="help-block">Word is too short.</p>
+            <p data-ng-show="theForm.word.$error.pattern || theForm.word.$pristine" class="help-block">Start word with letter <strong>{{words.slice(-1)[0].name | firstlet}}</strong>.</p>
+        </form>
+    </div>
+</div>

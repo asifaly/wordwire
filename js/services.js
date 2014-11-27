@@ -2,6 +2,7 @@
 /*global wordWire*/
 /*global angular*/
 /*global Firebase*/
+'use strict';
 wordWire.factory('UserService', ['$log', '$q', 'FIREBASE_URI', '$firebase',
         function ($log, $q, FIREBASE_URI, $firebase) {
 

@@ -3,8 +3,40 @@
 /*global angular*/
 /*global Firebase*/
 'use strict';
-var wordWire = angular.module('wordWire', ['firebase']);
+var wordWire = angular.module('wordWire', ['firebase', 'ngRoute']);
 wordWire.constant('FIREBASE_URI', 'https://wordwire.firebaseio.com/');
+
+wordWire.run(['$templateCache', '$http', function ($templateCache, $http) {
+    $http.get('partials/login.html', {cache: $templateCache});
+    $http.get('partials/game.html', {cache: $templateCache});
+    $http.get('partials/words.html', {cache: $templateCache});
+    $http.get('partials/players.html', {cache: $templateCache});
+}]);
+
+wordWire.config(['$routeProvider',
+        function ($routeProvider) {
+        $routeProvider.
+            when('/game', {
+                templateUrl: 'partials/game.html',
+                controller: 'WordCtrl'
+            }).
+            when('/login', {
+                templateUrl: 'partials/login.html',
+                controller: 'WordCtrl'
+            }).
+            when('/players', {
+                templateUrl: 'partials/players.html',
+                controller: 'WordCtrl'
+            }).
+            when('/words', {
+                templateUrl: 'partials/words.html',
+                controller: 'WordCtrl'
+            }).
+            otherwise({
+                redirectTo: '/'
+            });
+    }]);
+
 wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeout', '$window', '$filter', '$firebaseAuth', 'UserService', 'WordsService',
     function ($scope, $firebase, FIREBASE_URI, $timeout, $window, $filter, $firebaseAuth, UserService, WordsService) {
         //initialize pattern if it is not done, when app initializes, there is an error for invalid pattern
@@ -54,6 +86,7 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
                 //onlogin, presence will be updated to true i.e to show online users
                 UserService.presence(authData).then(function (data) {
                     $scope.user = data;
+                    $scope.activeTab = 'game';
                 });
             } else {
                 console.log("Logged out");
@@ -91,13 +124,13 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
                     }
 
                     WordsService.addWord(angular.copy($scope.newword)).then(function (nref) {
-                        $window.alert("New Word added at " + nref);
-                        $scope.isReadOnly = false;
+                        console.info("New Word added at " + nref);
+                        //$scope.isReadOnly = false;
+                        $scope.theForm.$setPristine();
                         $scope.newword = {
                             name: '',
                             score: ''
                         }; //clear the ng-model newword
-                        $scope.myForm.$setPristine(true);
                     });
 
                     WordsService.setStats(lastWord, pattern, firstLetter).then(function (stref) {
@@ -105,10 +138,11 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
                     });
                 }).catch(function (error) {
                     $window.alert(error);
+                    //$scope.isReadOnly = false;
                 });
             }).catch(function (error) {
                 $window.alert(error);
-                $scope.isReadOnly = false;
+                //$scope.isReadOnly = false;
             });
         };
 

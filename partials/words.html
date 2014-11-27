@@ -1,6 +1,18 @@
- <ul class="list-group">
-                    <li class="list-group-item" data-ng-repeat="(id,word) in words | orderBy: '-$id'">
-                        <span class="badge" data-ng-bind="word.score"></span>
-                        {{word.name}}
-                    </li>
-                </ul>
+<div class="row">
+    <div class="container col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="well well-sm" data-ng-init="w.d = words.length-1">
+            <h4><a href="https://www.wordnik.com/words/{{words[w.d].name}}" target="_blank">{{words[w.d].name | uppercase}}</a><small> - {{words[w.d].pos}}</small></h4>{{words[w.d].definition}}
+            <div><small> - {{words[w.d].attr}}</small>
+                <div class="outer">
+                    <img src="assets/wordnik_badge.png" alt="wordnik" />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="container col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <button type="button" id="wordy" class="btn btn-info" data-ng-repeat="(id,word) in words | orderBy: '-$id'" ng-click="w.d = words.length - $index - 1">{{word.name | uppercase}} <span id="score" class="badge" data-ng-bind="word.score"></span>
+        </button>
+    </div>
+</div>
