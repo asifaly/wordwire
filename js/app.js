@@ -6,11 +6,16 @@
 var wordWire = angular.module('wordWire', ['firebase', 'ngRoute']);
 wordWire.constant('FIREBASE_URI', 'https://wordwire.firebaseio.com/');
 
-wordWire.run(['$templateCache', '$http', function ($templateCache, $http) {
+wordWire.run(['$templateCache', '$http', '$rootScope', '$location', function ($templateCache, $http, $rootScope, $location) {
     $http.get('partials/login.html', {cache: $templateCache});
     $http.get('partials/game.html', {cache: $templateCache});
     $http.get('partials/words.html', {cache: $templateCache});
     $http.get('partials/players.html', {cache: $templateCache});
+    $rootScope.$on("$routeChangeError", function(event, next, previous, error) {
+    if (error === "AUTH_REQUIRED") {
+      $location.path("/login");
+    }
+  });
 }]);
 
 wordWire.config(['$routeProvider',
@@ -18,27 +23,47 @@ wordWire.config(['$routeProvider',
         $routeProvider.
             when('/game', {
                 templateUrl: 'partials/game.html',
-                controller: 'WordCtrl'
+                controller: 'WordCtrl',
+                resolve: {
+                    'currentAuth': ['Auth', function(Auth) {
+                        return Auth.$requireAuth();
+                    }]
+                }
             }).
             when('/login', {
                 templateUrl: 'partials/login.html',
-                controller: 'WordCtrl'
+                controller: 'WordCtrl',
+                resolve: {
+                    'currentAuth': ['Auth', function(Auth) {
+                        return Auth.$waitForAuth();
+                    }]
+                }
             }).
             when('/players', {
                 templateUrl: 'partials/players.html',
-                controller: 'WordCtrl'
+                controller: 'WordCtrl',
+                resolve: {
+                    'currentAuth': ['Auth', function(Auth) {
+                        return Auth.$requireAuth();
+                    }]
+                }
             }).
             when('/words', {
                 templateUrl: 'partials/words.html',
-                controller: 'WordCtrl'
+                controller: 'WordCtrl',
+                resolve: {
+                    'currentAuth': ['Auth', function(Auth) {
+                        return Auth.$requireAuth();
+                    }]
+                }
             }).
             otherwise({
-                redirectTo: '/'
+                redirectTo: '/login'
             });
     }]);
 
-wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeout', '$window', '$filter', '$firebaseAuth', 'UserService', 'WordsService',
-    function ($scope, $firebase, FIREBASE_URI, $timeout, $window, $filter, $firebaseAuth, UserService, WordsService) {
+wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeout', '$window', '$filter', 'Auth', 'UserService', 'WordsService', '$location',
+    function ($scope, $firebase, FIREBASE_URI, $timeout, $window, $filter, Auth, UserService, WordsService, $location) {
         //initialize pattern if it is not done, when app initializes, there is an error for invalid pattern
         $scope.stats = {};
         $scope.stats.pattern = new RegExp();
@@ -52,11 +77,14 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
             avatar: ''
         };
 
-        //defining firebase instances
-        var sRef = new Firebase(FIREBASE_URI + "stats/"),
-            uRef = new Firebase(FIREBASE_URI);
+        $scope.isActive = function(route) {
+        return route === $location.path();
+        };
 
-        $scope.authObj = $firebaseAuth(uRef);
+        //defining firebase instances
+        var sRef = new Firebase(FIREBASE_URI + "stats/");
+
+        $scope.authObj = Auth;
 
         //logout user
         $scope.logout = function logout() {
@@ -66,6 +94,7 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
                 displayName: '',
                 uid: ''
             };
+            $location.path("/login");
         };
 
         //social login user
@@ -73,7 +102,10 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
             Firebase.goOnline();
             $scope.authObj.$authWithOAuthPopup(provider).then(function (authData) {
                 UserService.addUser(authData).then(function (data) {
-                    console.info("Login Complete");
+                    console.info("Login OK");
+                    $timeout(function(){
+                        $location.path("/game");
+                    },1);
                 }).catch(function (error) {
                     console.error("Authentication failed:", error);
                 });
@@ -86,7 +118,6 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
                 //onlogin, presence will be updated to true i.e to show online users
                 UserService.presence(authData).then(function (data) {
                     $scope.user = data;
-                    $scope.activeTab = 'game';
                 });
             } else {
                 console.log("Logged out");

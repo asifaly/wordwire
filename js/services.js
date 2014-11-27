@@ -3,6 +3,11 @@
 /*global angular*/
 /*global Firebase*/
 'use strict';
+wordWire.factory('Auth', ['$firebaseAuth', 'FIREBASE_URI', function($firebaseAuth, FIREBASE_URI) {
+    var uRef = new Firebase(FIREBASE_URI);
+    return $firebaseAuth(uRef);
+}]);
+
 wordWire.factory('UserService', ['$log', '$q', 'FIREBASE_URI', '$firebase',
         function ($log, $q, FIREBASE_URI, $firebase) {
 

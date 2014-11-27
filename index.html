@@ -22,44 +22,25 @@
         </div>
         <div class="tabs">
             <ul class="nav nav-tabs" role="tablist" data-ng-init="activeTab = login">
-                <li class="active" data-ng-class="{'active': activeTab === 'login'}" data-ng-click="activeTab = 'login'" data-ng-hide="user.displayName !== ''"><a data-ng-href="#/login">Login</a>
+                <li class="active" data-ng-class="{active:isActive('/login')}" data-ng-hide="user.displayName !== ''"><a data-ng-href="#/login">Login</a>
                 </li>
-                <li class="active" data-ng-class="{'active': activeTab === 'game'}" data-ng-click="activeTab = 'game'"><a data-ng-href="#/game">Game</a>
+                <li class="active" data-ng-class="{active:isActive('/game')}"><a data-ng-href="#/game">Game</a>
                 </li>
-                <li class="active" data-ng-class="{'active': activeTab === 'wist'}" data-ng-click="activeTab = 'wist'"><a data-ng-href="#/words">Words</a>
+                <li class="active" data-ng-class="{active:isActive('/words')}"><a data-ng-href="#/words">Words</a>
                 </li>
-                <li class="active" data-ng-class="{'active': activeTab === 'players'}" data-ng-click="activeTab = 'players'"><a data-ng-href="#/players">Players</a>
+                <li class="active" data-ng-class="{active:isActive('/players')}"><a data-ng-href="#/players">Players</a>
                 </li>
             </ul>
         </div>
-        <div class="tab-content">
-<!--
-            <div data-ng-switch="activeTab">
-                <div data-ng-switch-when="login">
-                    <div data-ng-include="'partials/login.html'"></div>
-                </div>
-                <div data-ng-switch-when="game">
-                    <div data-ng-include="'partials/game.html'"></div>
-                </div>
-                <div data-ng-switch-when="wist">
-                    <div data-ng-include="'partials/words.html'"></div>
-                </div>
-                <div data-ng-switch-when="players">
-                    <div data-ng-include="'partials/players.html'"></div>
-                </div>
-            </div>
--->
-        </div>
         <div ng-view></div>
     </div>
-
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.27/angular.min.js"></script>
-    <script src="https://cdn.firebase.com/js/client/2.0.3/firebase.js"></script>
     <script src="https://cdn.firebase.com/libs/angularfire/0.9.0/angularfire.min.js"></script>
+    <script src="https://cdn.firebase.com/js/client/2.0.3/firebase.js"></script>
     <script src="https://code.angularjs.org/1.2.27/angular-route.min.js"></script>
     <script src="js/app.js"></script>
-    <script src="js/filters.js"></script>
     <script src="js/services.js"></script>
+    <script src="js/filters.js"></script>
 </body>
 
 </html>
