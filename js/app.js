@@ -13,7 +13,7 @@ wordWire.run(['$templateCache', '$http', '$rootScope', '$location', function ($t
     $http.get('partials/players.html', {cache: $templateCache});
     $rootScope.$on("$routeChangeError", function(event, next, previous, error) {
     if (error === "AUTH_REQUIRED") {
-      $location.path("/login");
+        $location.path("/login");
     }
   });
 }]);
@@ -101,11 +101,9 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
         $scope.login = function socialLogin(provider) {
             Firebase.goOnline();
             $scope.authObj.$authWithOAuthPopup(provider).then(function (authData) {
+                    $location.path("/game");
                 UserService.addUser(authData).then(function (data) {
-                    console.info("Login OK");
-                    $timeout(function(){
-                        $location.path("/game");
-                    },1);
+                    console.info("New User Added");
                 }).catch(function (error) {
                     console.error("Authentication failed:", error);
                 });
@@ -156,7 +154,7 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
 
                     WordsService.addWord(angular.copy($scope.newword)).then(function (nref) {
                         console.info("New Word added at " + nref);
-                        //$scope.isReadOnly = false;
+                        $scope.isReadOnly = false;
                         $scope.theForm.$setPristine();
                         $scope.newword = {
                             name: '',
@@ -169,11 +167,11 @@ wordWire.controller('WordCtrl', ['$scope', '$firebase', 'FIREBASE_URI', '$timeou
                     });
                 }).catch(function (error) {
                     $window.alert(error);
-                    //$scope.isReadOnly = false;
+                    $scope.isReadOnly = false;
                 });
             }).catch(function (error) {
                 $window.alert(error);
-                //$scope.isReadOnly = false;
+                $scope.isReadOnly = false;
             });
         };
 
